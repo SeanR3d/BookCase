@@ -18,7 +18,7 @@ import android.view.ViewGroup;
  */
 public class ViewPagerFragment extends Fragment {
 
-    MainActivity.MyFragmentStatePagerAdapter myFragmentStatePagerAdapter;
+    MyFragmentStatePagerAdapter mAdapter;
     ViewPager mPager;
 
     public ViewPagerFragment() {
@@ -32,17 +32,21 @@ public class ViewPagerFragment extends Fragment {
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_view_pager, container, false);
 
-
-        myFragmentStatePagerAdapter = new MainActivity.MyFragmentStatePagerAdapter(getChildFragmentManager());
+        mAdapter = new MyFragmentStatePagerAdapter(getChildFragmentManager());
 
         mPager = view.findViewById(R.id.viewPager);
+        mPager.setAdapter(mAdapter);
 
         return view;
     }
 
     public static class MyFragmentStatePagerAdapter extends FragmentStatePagerAdapter {
+
+        String[] books;
+
         public MyFragmentStatePagerAdapter(FragmentManager fm) {
             super(fm);
+
         }
 
         @Override
