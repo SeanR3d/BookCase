@@ -1,0 +1,21 @@
+<resources>
+    <string name="app_name">BookCase</string>
+
+    <string-array name="books">
+        <item>In Search of Lost Time</item>
+        <item>Ulysses</item>
+        <item>Don Quixote</item>
+        <item>The Great Gatsby</item>
+        <item>Moby Dick</item>
+        <item>One Hundred Years of Solitude</item>
+        <item>War and Peace</item>
+        <item>Hamlet</item>
+        <item>Lolita</item>
+        <item>The Odyssey</item>
+    </string-array>
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+
+
+</resources>
