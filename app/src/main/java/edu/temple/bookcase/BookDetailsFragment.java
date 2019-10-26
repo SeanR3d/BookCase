@@ -15,9 +15,18 @@ import android.view.ViewGroup;
  */
 public class BookDetailsFragment extends Fragment {
 
+    private final static String titleKey = "titleKey";
 
     public BookDetailsFragment() {
         // Required empty public constructor
+    }
+
+    public static BookDetailsFragment newInstance(String titleValue) {
+        BookDetailsFragment bookDetailsFragment = new BookDetailsFragment();
+        Bundle args = new Bundle();
+        args.putString(titleKey, titleValue);
+        bookDetailsFragment.setArguments(args);
+        return bookDetailsFragment;
     }
 
 
