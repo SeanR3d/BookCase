@@ -8,7 +8,7 @@ import androidx.fragment.app.FragmentStatePagerAdapter;
 
 public class MyFragmentStatePagerAdapter extends FragmentStatePagerAdapter {
 
-    String[] books;
+    private String[] books;
 
     public MyFragmentStatePagerAdapter(FragmentManager fm, String[] books) {
         super(fm);

@@ -1,15 +1,13 @@
 package edu.temple.bookcase;
 
 
+import android.content.res.Configuration;
 import android.os.Bundle;
 
 import androidx.fragment.app.FragmentActivity;
 import androidx.viewpager.widget.ViewPager;
 
 public class MainActivity extends FragmentActivity {
-
-    private MyFragmentStatePagerAdapter mAdapter;
-    private ViewPager mPager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -19,14 +17,16 @@ public class MainActivity extends FragmentActivity {
         // Get books array
         String[] books = getResources().getStringArray(R.array.books);
 
-        this.mPager = findViewById(R.id.viewPager);
-        this.mAdapter = new MyFragmentStatePagerAdapter(getSupportFragmentManager(), books);
-        mPager.setAdapter(mAdapter);
+        int orientation = this.getResources().getConfiguration().orientation;
 
-//        getSupportFragmentManager()
-//                .beginTransaction()
-//                .add(R.id.view_pager_fragment, new ViewPagerFragment())
-//                .commit();
+        if (orientation == Configuration.ORIENTATION_PORTRAIT){
+            ViewPager mPager = findViewById(R.id.viewPager);
+            MyFragmentStatePagerAdapter mAdapter = new MyFragmentStatePagerAdapter(getSupportFragmentManager(), books);
+            mPager.setAdapter(mAdapter);
+        }
+
+
+
 
     }
 
