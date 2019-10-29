@@ -6,25 +6,18 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
-<!--    <fragment-->
-<!--        android:id="@+id/viewpager_fragment"-->
-<!--        android:name="edu.temple.bookcase.ViewPagerFragment"-->
-<!--        android:layout_width="match_parent"-->
-<!--        android:layout_height="match_parent"-->
-<!--        app:layout_constraintStart_toStartOf="parent"-->
-<!--        app:layout_constraintTop_toTopOf="parent" />-->
-
-    <fragment
-        android:id="@+id/viewpager_fragment"
-        android:name="edu.temple.bookcase.ViewPagerFragment"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"/>
-
     <androidx.viewpager.widget.ViewPager
         android:id="@+id/viewPager"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
+<!--    <fragment-->
+<!--        android:id="@+id/view_pager_fragment"-->
+<!--        android:name="edu.temple.bookcase.ViewPagerFragment"-->
+<!--        android:layout_width="match_parent"-->
+<!--        android:layout_height="match_parent"-->
+<!--        app:layout_constraintStart_toStartOf="parent"-->
+<!--        app:layout_constraintTop_toTopOf="parent" />-->
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>
