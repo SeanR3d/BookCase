@@ -1,8 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical" android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:orientation="horizontal" android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:baselineAligned="false">
 
 
+    <fragment
+        android:id="@+id/book_list_fragment"
+        android:name="edu.temple.bookcase.BookListFragment"
+        android:layout_width="295dp"
+        android:layout_height="match_parent"
+        tools:layout_editor_absoluteX="170dp"
+        tools:layout_editor_absoluteY="162dp" />
+    <fragment
+        android:id="@+id/book_details_fragment"
+        android:name="edu.temple.bookcase.BookDetailsFragment"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1" />
 
 </LinearLayout>
