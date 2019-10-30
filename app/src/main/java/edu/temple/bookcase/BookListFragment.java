@@ -6,6 +6,7 @@ import android.os.Bundle;
 
 import androidx.fragment.app.Fragment;
 
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -20,11 +21,11 @@ import android.widget.ListView;
 public class BookListFragment extends Fragment {
 
     private OnBookSelectedListener callback;
-    Context parent;
-    String[] books;
-    View view;
-    ListView listView;
-    ArrayAdapter<String> adapter;
+    private Context parent;
+    private String[] books;
+    private View view;
+    private ListView listView;
+    private ArrayAdapter<String> adapter;
 
 
     public BookListFragment() {
@@ -42,7 +43,7 @@ public class BookListFragment extends Fragment {
     }
 
     public interface OnBookSelectedListener {
-        public void OnBookSelected(String bookTitle);
+        void OnBookSelected(String bookTitle);
     }
 
 
@@ -50,15 +51,13 @@ public class BookListFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        View view = inflater.inflate(R.layout.fragment_book_list, container, false);
+        view = inflater.inflate(R.layout.fragment_book_list, container, false);
 
-        if (savedInstanceState == null) {
-
-        }
         listView = view.findViewById(R.id.bookListView);
         books = getResources().getStringArray(R.array.books);
         adapter = new ArrayAdapter<>(parent, android.R.layout.simple_list_item_1, books);
         listView.setAdapter(adapter);
+        Log.e("BookListFrag", "CREATEVIEW CALLED");
 
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override

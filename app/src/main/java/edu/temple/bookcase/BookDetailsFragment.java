@@ -18,6 +18,7 @@ public class BookDetailsFragment extends Fragment {
 
     private final static String bookTitleKey = "bookTitleKey";
     private View view;
+    private TextView textView;
 
     public BookDetailsFragment() {
         // Required empty public constructor
@@ -36,6 +37,13 @@ public class BookDetailsFragment extends Fragment {
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         view = inflater.inflate(R.layout.fragment_book_details, container, false);
+
+        if(getArguments() != null){
+            textView = view.findViewById(R.id.bookTitleTextView);
+            String title = getArguments().getString(bookTitleKey);
+            textView.setText(title);
+        }
+
         return view;
     }
 

@@ -4,13 +4,18 @@ package edu.temple.bookcase;
 import android.os.Bundle;
 
 import androidx.fragment.app.Fragment;
+import androidx.viewpager.widget.ViewPager;
 
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.TextView;
 
 public class ViewPagerFragment extends Fragment {
+
+    private View view;
+    private String[] books;
+    private ViewPager mPager;
+    private MyFragmentStatePagerAdapter mAdapter;
 
     public ViewPagerFragment() {
         // Required empty public constructor
@@ -20,10 +25,11 @@ public class ViewPagerFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        View view = inflater.inflate(R.layout.fragment_view_pager, container, false);
-        TextView textView = view.findViewById(R.id.bookTitle);
-        String title = getArguments().getString("bookTitle");
-        textView.setText(title);
+        view = inflater.inflate(R.layout.fragment_view_pager, container, false);
+        books = getResources().getStringArray(R.array.books);
+        mPager = view.findViewById(R.id.viewPager);
+        mAdapter = new MyFragmentStatePagerAdapter(getChildFragmentManager(), books);
+        mPager.setAdapter(mAdapter);
         return view;
     }
 
