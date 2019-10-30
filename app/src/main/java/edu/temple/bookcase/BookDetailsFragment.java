@@ -11,9 +11,6 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 
-/**
- * A simple {@link Fragment} subclass.
- */
 public class BookDetailsFragment extends Fragment {
 
     private final static String bookTitleKey = "bookTitleKey";
@@ -38,7 +35,7 @@ public class BookDetailsFragment extends Fragment {
         // Inflate the layout for this fragment
         view = inflater.inflate(R.layout.fragment_book_details, container, false);
 
-        if(getArguments() != null){
+        if (getArguments() != null) {
             textView = view.findViewById(R.id.bookTitleTextView);
             String title = getArguments().getString(bookTitleKey);
             textView.setText(title);

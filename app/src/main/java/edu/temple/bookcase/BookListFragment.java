@@ -57,7 +57,6 @@ public class BookListFragment extends Fragment {
         books = getResources().getStringArray(R.array.books);
         adapter = new ArrayAdapter<>(parent, android.R.layout.simple_list_item_1, books);
         listView.setAdapter(adapter);
-        Log.e("BookListFrag", "CREATEVIEW CALLED");
 
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
@@ -66,7 +65,6 @@ public class BookListFragment extends Fragment {
                 callback.OnBookSelected(bookTitle);
             }
         });
-
 
 
         return view;
