@@ -1,16 +1,53 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/frameLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".BookDetailsFragment">
 
+    <ImageView
+        android:id="@+id/bookCoverImageView"
+        android:layout_width="256dp"
+        android:layout_height="256dp"
+        android:layout_marginStart="77dp"
+        android:layout_marginTop="117dp"
+        android:contentDescription="@string/book_cover"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:src="@tools:sample/avatars[3]" />
+
     <TextView
         android:id="@+id/bookTitleTextView"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:gravity="center"
+        android:layout_width="100dp"
+        android:layout_height="25dp"
+        android:layout_marginStart="152dp"
+        android:layout_marginTop="8dp"
+        android:text="Title"
         android:textAlignment="center"
-        android:textSize="24sp" />
-</FrameLayout>
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/bookCoverImageView" />
+
+    <TextView
+        android:id="@+id/bookAuthorTextView"
+        android:layout_width="100dp"
+        android:layout_height="25dp"
+        android:layout_marginStart="152dp"
+        android:layout_marginTop="8dp"
+        android:text="Author"
+        android:textAlignment="center"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/bookTitleTextView" />
+
+    <TextView
+        android:id="@+id/bookPublishedTextView"
+        android:layout_width="100dp"
+        android:layout_height="25dp"
+        android:layout_marginStart="152dp"
+        android:layout_marginTop="8dp"
+        android:text="Year"
+        android:textAlignment="center"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/bookAuthorTextView" />
+</androidx.constraintlayout.widget.ConstraintLayout>

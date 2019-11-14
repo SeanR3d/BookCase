@@ -8,6 +8,8 @@ import android.os.Message;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentTransaction;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -28,6 +30,7 @@ public class MainActivity extends FragmentActivity implements BookListFragment.O
         setContentView(R.layout.activity_main);
 
         getBookListData();
+
     }
 
     @Override

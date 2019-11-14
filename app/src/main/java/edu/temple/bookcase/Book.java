@@ -1,6 +1,8 @@
 package edu.temple.bookcase;
 
-public class Book {
+import java.io.Serializable;
+
+public class Book implements Serializable {
 
     int id;             // A system provided ID for the book
     String title;       // The title of the book
