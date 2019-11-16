@@ -1,6 +1,7 @@
 package edu.temple.bookcase;
 
 
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -9,7 +10,6 @@ import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
 import androidx.fragment.app.FragmentManager;
-import androidx.fragment.app.FragmentTransaction;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -22,14 +22,30 @@ import java.util.ArrayList;
 
 public class MainActivity extends FragmentActivity implements BookListFragment.OnBookSelectedListener {
 
+    FragmentManager fm;
     ArrayList<Book> bookArrayList;
+    boolean onePane;
+    Fragment fragment;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        fm = getSupportFragmentManager();
 
         getBookListData();
+
+//        onePane = findViewById(R.id.port_layout) == null;
+//
+//        fragment = fm.findFragmentById(R.id.port_layout);
+//
+//        if (fragment == null) {
+//            getBookListData();
+//            fm.beginTransaction()
+//                    .add(R.id.port_layout, ViewPagerFragment.newInstance(bookArrayList))
+//                    .commit();
+//        }
+
 
     }
 
@@ -46,14 +62,24 @@ public class MainActivity extends FragmentActivity implements BookListFragment.O
         BookDetailsFragment bookDetailsFragment = (BookDetailsFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.book_details_fragment);
 
+        Book book = getBook(bookTitle);
+
         if (bookDetailsFragment != null) {
-            bookDetailsFragment.updateDetailsView(bookTitle);
+            bookDetailsFragment.updateDetailsView(book);
         } else {
-            BookDetailsFragment newFragment = BookDetailsFragment.newInstance(bookTitle);
+            BookDetailsFragment newFragment = BookDetailsFragment.newInstance(book);
             getSupportFragmentManager().beginTransaction()
                     .replace(R.id.book_details_fragment, newFragment)
                     .commit();
         }
+    }
+
+    public Book getBook(String bookTitle) {
+        for (Book book: bookArrayList) {
+           if (book.title.equals(bookTitle))
+               return book;
+        }
+        return null;
     }
 
     public void getBookListData() {
@@ -114,6 +140,21 @@ public class MainActivity extends FragmentActivity implements BookListFragment.O
             } catch (Exception e) {
                 e.printStackTrace();
             }
+
+            fragment = fm.findFragmentById(R.id.view_pager_fragment);
+            if (fragment != null) {
+                getBookListData();
+                fm.beginTransaction()
+                        .replace(R.id.view_pager_fragment, ViewPagerFragment.newInstance(bookArrayList))
+                        .commit();
+            }
+//            else if(fragment instanceof ViewPagerFragment) {
+//                fm.beginTransaction()
+//                        .replace(R.id.port_layout, ViewPagerFragment.newInstance(bookArrayList))
+//                        .commit();
+//            } else if (fragment instanceof BookListFragment) {
+//
+//            }
 
             return false;
         }
