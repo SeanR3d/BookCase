@@ -1,10 +1,10 @@
 package edu.temple.bookcase;
 
 
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
@@ -25,7 +25,8 @@ public class MainActivity extends FragmentActivity implements BookListFragment.O
     FragmentManager fm;
     ArrayList<Book> bookArrayList;
     boolean onePane;
-    Fragment fragment;
+    Fragment fragmentContainer1;
+    Fragment fragmentContainer2;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -33,18 +34,56 @@ public class MainActivity extends FragmentActivity implements BookListFragment.O
         setContentView(R.layout.activity_main);
         fm = getSupportFragmentManager();
 
-        getBookListData();
+//        getBookListData();
 
-//        onePane = findViewById(R.id.port_layout) == null;
-//
-//        fragment = fm.findFragmentById(R.id.port_layout);
-//
-//        if (fragment == null) {
-//            getBookListData();
-//            fm.beginTransaction()
-//                    .add(R.id.port_layout, ViewPagerFragment.newInstance(bookArrayList))
-//                    .commit();
-//        }
+        onePane = findViewById(R.id.viewPagerContainer) != null;
+        fragmentContainer1 = fm.findFragmentById(R.id.viewPagerContainer);
+        fragmentContainer2 = fm.findFragmentById(R.id.bookListContainer);
+
+        Fragment bookDetailsFragment = fm.findFragmentById(R.id.book_details_fragment);
+        if (bookDetailsFragment != null) {
+            fm.beginTransaction()
+                    .remove(bookDetailsFragment)
+                    .commit();
+        }
+
+        if (onePane) {
+            if (fragmentContainer1 == null) {
+                if (fragmentContainer2 != null) {
+                    bookArrayList = ((BookListFragment) fragmentContainer2).getBooks();
+                    fm.beginTransaction()
+                            .remove(fragmentContainer2)
+                            .add(R.id.viewPagerContainer, ViewPagerFragment.newInstance(bookArrayList))
+                            .commit();
+                } else {
+                    fm.beginTransaction()
+                            .add(R.id.viewPagerContainer, new ViewPagerFragment())
+                            .commit();
+                    getBookListData();
+                }
+            }
+        } else {
+            if (fragmentContainer2 == null) {
+                if (fragmentContainer1 != null) {
+                    bookArrayList = ((ViewPagerFragment) fragmentContainer1).getBooks();
+                    fm.beginTransaction()
+                            .remove(fragmentContainer1)
+                            .add(R.id.bookListContainer, BookListFragment.newInstance(bookArrayList))
+                            .commit();
+                } else {
+                    fm.beginTransaction()
+                            .add(R.id.bookListContainer, new BookListFragment())
+                            .add(R.id.BookDetailsContainer, new BookDetailsFragment())
+                            .commit();
+                    getBookListData();
+                }
+            } else {
+                bookArrayList = ((BookListFragment) fragmentContainer2).getBooks();
+                fm.beginTransaction()
+                        .replace(R.id.bookListContainer, BookListFragment.newInstance(bookArrayList))
+                        .commit();
+            }
+        }
 
 
     }
@@ -75,9 +114,9 @@ public class MainActivity extends FragmentActivity implements BookListFragment.O
     }
 
     public Book getBook(String bookTitle) {
-        for (Book book: bookArrayList) {
-           if (book.title.equals(bookTitle))
-               return book;
+        for (Book book : bookArrayList) {
+            if (book.title.equals(bookTitle))
+                return book;
         }
         return null;
     }
@@ -106,9 +145,10 @@ public class MainActivity extends FragmentActivity implements BookListFragment.O
                         response.append(tmpResponse);
                         tmpResponse = reader.readLine();
                     }
-                    JSONArray jsonArray= new JSONArray(response.toString());
+                    JSONArray jsonArray = new JSONArray(response.toString());
                     Message msg = Message.obtain();
                     msg.obj = jsonArray;
+                    Log.d("HTTP GET", "Successfully retrieved data");
                     bookListResponseHandler.sendMessage(msg);
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -136,25 +176,25 @@ public class MainActivity extends FragmentActivity implements BookListFragment.O
                     );
                     bookArrayList.add(book);
                 }
+                Log.d("Handler", "Created bookArrayList of size:" + bookArrayList.size() + ".");
 
             } catch (Exception e) {
                 e.printStackTrace();
             }
 
-            fragment = fm.findFragmentById(R.id.view_pager_fragment);
-            if (fragment != null) {
-                getBookListData();
+            fragmentContainer1 = fm.findFragmentById(R.id.viewPagerContainer);
+            fragmentContainer2 = fm.findFragmentById(R.id.bookListContainer);
+            if (fragmentContainer1 != null) {
                 fm.beginTransaction()
-                        .replace(R.id.view_pager_fragment, ViewPagerFragment.newInstance(bookArrayList))
+                        .remove(fragmentContainer1)
+                        .add(R.id.viewPagerContainer, ViewPagerFragment.newInstance(bookArrayList))
+                        .commit();
+            } else if (fragmentContainer2 != null) {
+                fm.beginTransaction()
+                        .remove(fragmentContainer2)
+                        .add(R.id.bookListContainer, BookListFragment.newInstance(bookArrayList))
                         .commit();
             }
-//            else if(fragment instanceof ViewPagerFragment) {
-//                fm.beginTransaction()
-//                        .replace(R.id.port_layout, ViewPagerFragment.newInstance(bookArrayList))
-//                        .commit();
-//            } else if (fragment instanceof BookListFragment) {
-//
-//            }
 
             return false;
         }

@@ -22,8 +22,8 @@ public class BookListFragment extends Fragment {
 
     private OnBookSelectedListener callback;
     private Context parent;
-    private ArrayList<Book> bookArrayList;
-    private ArrayList<String> books;
+    private ArrayList<Book> books;
+    private ArrayList<String> bookTitles;
     private View view;
     private ListView listView;
     private ArrayAdapter<String> adapter;
@@ -54,17 +54,16 @@ public class BookListFragment extends Fragment {
         args.putSerializable(bookTitlesKey, bookTitles);
         fragment.setArguments(args);
 
-
-
         return fragment;
     }
 
-    public void setBookArrayList(ArrayList<Book> bookArrayList) {
-        this.bookArrayList = bookArrayList;
-    }
-
-    public ArrayList<Book> getBookArrayList() {
-        return this.bookArrayList;
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        if(getArguments() != null) {
+            books = (ArrayList<Book>)getArguments().getSerializable(bookArrayListKey);
+            bookTitles = (ArrayList<String>)getArguments().getSerializable(bookTitlesKey);
+        }
     }
 
     public void setOnBookSelectedListener(OnBookSelectedListener callback) {
@@ -75,33 +74,31 @@ public class BookListFragment extends Fragment {
         void OnBookSelected(String bookTitle);
     }
 
-
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
+        // Inflate the layout for this fragmentContainer1
         view = inflater.inflate(R.layout.fragment_book_list, container, false);
 
-        if(savedInstanceState != null) {
-            bookArrayList = savedInstanceState.getParcelable(bookArrayListKey);
+        if(books != null) {
             listView = view.findViewById(R.id.bookListView);
-            adapter = new ArrayAdapter<>(parent, android.R.layout.simple_list_item_1, books);
+            adapter = new ArrayAdapter<>(parent, android.R.layout.simple_list_item_1, bookTitles);
             listView.setAdapter(adapter);
+
+            listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                @Override
+                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                    String bookTitle = adapter.getItem(position);
+                    callback.OnBookSelected(bookTitle);
+                }
+            });
         }
-
-
-
-        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                String bookTitle = adapter.getItem(position);
-                callback.OnBookSelected(bookTitle);
-            }
-        });
-
 
         return view;
     }
 
+    public ArrayList<Book> getBooks() {
+        return this.books;
+    }
 
 }

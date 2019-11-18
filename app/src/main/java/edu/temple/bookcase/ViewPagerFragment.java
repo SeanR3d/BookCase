@@ -32,19 +32,22 @@ public class ViewPagerFragment extends Fragment {
         return fragment;
     }
 
-    public ArrayList<Book> getBooks() {
-        return this.books;
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        if(getArguments() != null) {
+            books = (ArrayList<Book>)getArguments().getSerializable(bookArrayListKey);
+        }
     }
 
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
+        // Inflate the layout for this fragmentContainer1
         view = inflater.inflate(R.layout.fragment_view_pager, container, false);
 
-        if(savedInstanceState != null){
-            books = savedInstanceState.getParcelable(bookArrayListKey);
+        if(books != null){
             mPager = view.findViewById(R.id.viewPager);
             mAdapter = new MyFragmentStatePagerAdapter(getChildFragmentManager(), books);
             mPager.setAdapter(mAdapter);
@@ -53,4 +56,7 @@ public class ViewPagerFragment extends Fragment {
         return view;
     }
 
+    public ArrayList<Book> getBooks() {
+        return this.books;
+    }
 }

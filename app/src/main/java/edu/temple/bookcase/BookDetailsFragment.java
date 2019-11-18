@@ -17,6 +17,7 @@ import com.squareup.picasso.Picasso;
 public class BookDetailsFragment extends Fragment {
 
     private final static String bookObjKey = "bookObjKey";
+    private Book book;
     private View view;
     private ImageView bookCoverImageView;
     private TextView bookTitleTextView;
@@ -36,13 +37,20 @@ public class BookDetailsFragment extends Fragment {
     }
 
     @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        if(getArguments() != null) {
+            book = (Book)getArguments().getSerializable(bookObjKey);
+        }
+    }
+
+    @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
+        // Inflate the layout for this fragmentContainer1
         view = inflater.inflate(R.layout.fragment_book_details, container, false);
 
-        if (getArguments() != null) {
-            Book book = (Book) getArguments().getParcelable(bookObjKey);
+        if (book != null) {
             bookCoverImageView = view.findViewById(R.id.bookCoverImageView);
             bookTitleTextView = view.findViewById(R.id.bookTitleTextView);
             bookAuthorTextView = view.findViewById(R.id.bookAuthorTextView);
@@ -51,7 +59,7 @@ public class BookDetailsFragment extends Fragment {
             Picasso.with(getContext()).load(book.coverURL).into(bookCoverImageView);
             bookTitleTextView.setText(book.title);
             bookAuthorTextView.setText(book.author);
-            bookPublishedTextView.setText(book.published);
+            bookPublishedTextView.setText(String.valueOf(book.published));
 
         }
 
@@ -67,7 +75,7 @@ public class BookDetailsFragment extends Fragment {
         Picasso.with(getContext()).load(book.coverURL).into(bookCoverImageView);
         bookTitleTextView.setText(book.title);
         bookAuthorTextView.setText(book.author);
-        bookPublishedTextView.setText(book.published);
+        bookPublishedTextView.setText(String.valueOf(book.published));
     }
 
 }
