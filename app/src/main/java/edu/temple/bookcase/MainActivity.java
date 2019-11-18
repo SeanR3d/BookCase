@@ -34,8 +34,6 @@ public class MainActivity extends FragmentActivity implements BookListFragment.O
         setContentView(R.layout.activity_main);
         fm = getSupportFragmentManager();
 
-//        getBookListData();
-
         onePane = findViewById(R.id.viewPagerContainer) != null;
         fragmentContainer1 = fm.findFragmentById(R.id.viewPagerContainer);
         fragmentContainer2 = fm.findFragmentById(R.id.bookListContainer);
@@ -98,8 +96,7 @@ public class MainActivity extends FragmentActivity implements BookListFragment.O
 
     @Override
     public void OnBookSelected(String bookTitle) {
-        BookDetailsFragment bookDetailsFragment = (BookDetailsFragment) getSupportFragmentManager()
-                .findFragmentById(R.id.book_details_fragment);
+        BookDetailsFragment bookDetailsFragment = (BookDetailsFragment) fm.findFragmentById(R.id.book_details_fragment);
 
         Book book = getBook(bookTitle);
 
@@ -107,8 +104,8 @@ public class MainActivity extends FragmentActivity implements BookListFragment.O
             bookDetailsFragment.updateDetailsView(book);
         } else {
             BookDetailsFragment newFragment = BookDetailsFragment.newInstance(book);
-            getSupportFragmentManager().beginTransaction()
-                    .replace(R.id.book_details_fragment, newFragment)
+            fm.beginTransaction()
+                    .add(R.id.book_details_fragment, newFragment)
                     .commit();
         }
     }
