@@ -23,11 +23,12 @@ public class BookListFragment extends Fragment {
     private OnBookSelectedListener callback;
     private Context parent;
     private ArrayList<Book> books;
+    private ArrayList<Book> completeBooks;
     private ArrayList<String> bookTitles;
     private View view;
     private ListView listView;
     private ArrayAdapter<String> adapter;
-
+    private final static String completeBookListKey = "completeBookListKey";
     private final static String bookArrayListKey = "bookArrayListKey";
     private final static String bookTitlesKey = "bookTitlesKey";
 
@@ -42,27 +43,35 @@ public class BookListFragment extends Fragment {
         this.parent = context;
     }
 
-    public static BookListFragment newInstance(ArrayList<Book> bookArrayList) {
+    public static BookListFragment newInstance(ArrayList<Book> filteredBookList, ArrayList<Book> completeBookList) {
 
-        ArrayList<String> bookTitles = new ArrayList<>();
-        for (Book book : bookArrayList)
-            bookTitles.add(book.title);
+        ArrayList<String> bookTitles = getBookTitlesList(filteredBookList);
 
         BookListFragment fragment = new BookListFragment();
         Bundle args = new Bundle();
-        args.putSerializable(bookArrayListKey, bookArrayList);
+        args.putSerializable(bookArrayListKey, filteredBookList);
+        args.putSerializable(completeBookListKey, completeBookList);
         args.putSerializable(bookTitlesKey, bookTitles);
         fragment.setArguments(args);
 
         return fragment;
     }
 
+    private static ArrayList<String> getBookTitlesList(ArrayList<Book> bookArrayList) {
+        ArrayList<String> bookTitles = new ArrayList<>();
+        for (Book book : bookArrayList)
+            bookTitles.add(book.title);
+        return bookTitles;
+    }
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if(getArguments() != null) {
-            books = (ArrayList<Book>)getArguments().getSerializable(bookArrayListKey);
-            bookTitles = (ArrayList<String>)getArguments().getSerializable(bookTitlesKey);
+        Bundle args = getArguments();
+        if (args != null) {
+            books = (ArrayList<Book>) args.getSerializable(bookArrayListKey);
+            completeBooks = (ArrayList<Book>) args.getSerializable(completeBookListKey);
+            bookTitles = (ArrayList<String>) args.getSerializable(bookTitlesKey);
         }
     }
 
@@ -80,7 +89,7 @@ public class BookListFragment extends Fragment {
         // Inflate the layout for this fragmentContainer1
         view = inflater.inflate(R.layout.fragment_book_list, container, false);
 
-        if(books != null) {
+        if (books != null) {
             listView = view.findViewById(R.id.bookListView);
             adapter = new ArrayAdapter<>(parent, android.R.layout.simple_list_item_1, bookTitles);
             listView.setAdapter(adapter);
@@ -97,8 +106,25 @@ public class BookListFragment extends Fragment {
         return view;
     }
 
+    public void filterArrayAdapter(ArrayList<Book> filteredBooks) {
+        ArrayList<String> filteredBookTitles = getBookTitlesList(filteredBooks);
+        if (adapter != null) {
+            adapter = new ArrayAdapter<>(parent, android.R.layout.simple_list_item_1, filteredBookTitles);
+            adapter.notifyDataSetChanged();
+            listView.setAdapter(adapter);
+        }
+
+        if (getArguments() != null) {
+            getArguments().putSerializable(bookArrayListKey, filteredBooks);
+        }
+    }
+
     public ArrayList<Book> getBooks() {
         return this.books;
+    }
+
+    public ArrayList<Book> getCompleteBooks() {
+        return this.completeBooks;
     }
 
 }

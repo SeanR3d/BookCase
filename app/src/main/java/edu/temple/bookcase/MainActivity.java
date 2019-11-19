@@ -5,6 +5,8 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
+import android.view.View;
+import android.widget.EditText;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
@@ -24,6 +26,7 @@ public class MainActivity extends FragmentActivity implements BookListFragment.O
 
     FragmentManager fm;
     ArrayList<Book> bookArrayList;
+    ArrayList<Book> prevFilterBookList;
     boolean onePane;
     Fragment fragmentContainer1;
     Fragment fragmentContainer2;
@@ -38,7 +41,7 @@ public class MainActivity extends FragmentActivity implements BookListFragment.O
         fragmentContainer1 = fm.findFragmentById(R.id.viewPagerContainer);
         fragmentContainer2 = fm.findFragmentById(R.id.bookListContainer);
 
-        Fragment bookDetailsFragment = fm.findFragmentById(R.id.book_details_fragment);
+        final Fragment bookDetailsFragment = fm.findFragmentById(R.id.book_details_fragment);
         if (bookDetailsFragment != null) {
             fm.beginTransaction()
                     .remove(bookDetailsFragment)
@@ -48,10 +51,12 @@ public class MainActivity extends FragmentActivity implements BookListFragment.O
         if (onePane) {
             if (fragmentContainer1 == null) {
                 if (fragmentContainer2 != null) {
-                    bookArrayList = ((BookListFragment) fragmentContainer2).getBooks();
+                    bookArrayList = ((BookListFragment) fragmentContainer2).getCompleteBooks();
+                    prevFilterBookList = ((BookListFragment) fragmentContainer2).getBooks();
+                    ViewPagerFragment viewPagerFragment = ViewPagerFragment.newInstance(prevFilterBookList, bookArrayList);
                     fm.beginTransaction()
                             .remove(fragmentContainer2)
-                            .add(R.id.viewPagerContainer, ViewPagerFragment.newInstance(bookArrayList))
+                            .add(R.id.viewPagerContainer, viewPagerFragment)
                             .commit();
                 } else {
                     fm.beginTransaction()
@@ -63,11 +68,14 @@ public class MainActivity extends FragmentActivity implements BookListFragment.O
         } else {
             if (fragmentContainer2 == null) {
                 if (fragmentContainer1 != null) {
-                    bookArrayList = ((ViewPagerFragment) fragmentContainer1).getBooks();
+                    bookArrayList = ((ViewPagerFragment) fragmentContainer1).getCompleteBooks();
+                    prevFilterBookList = ((ViewPagerFragment) fragmentContainer1).getBooks();
+                    BookListFragment bookListFragment = BookListFragment.newInstance(prevFilterBookList, bookArrayList);
                     fm.beginTransaction()
                             .remove(fragmentContainer1)
-                            .add(R.id.bookListContainer, BookListFragment.newInstance(bookArrayList))
+                            .add(R.id.bookListContainer, bookListFragment)
                             .commit();
+
                 } else {
                     fm.beginTransaction()
                             .add(R.id.bookListContainer, new BookListFragment())
@@ -78,12 +86,30 @@ public class MainActivity extends FragmentActivity implements BookListFragment.O
             } else {
                 bookArrayList = ((BookListFragment) fragmentContainer2).getBooks();
                 fm.beginTransaction()
-                        .replace(R.id.bookListContainer, BookListFragment.newInstance(bookArrayList))
+                        .replace(R.id.bookListContainer, BookListFragment.newInstance(bookArrayList, bookArrayList))
                         .commit();
             }
         }
 
+        findViewById(R.id.searchButton).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                EditText editText = findViewById(R.id.searchEditText);
+                ArrayList<Book> filterBooksArrayList = filterBooks(editText.getText().toString());
+                if (onePane) {
+                    ViewPagerFragment viewPagerFragment = (ViewPagerFragment) fm.findFragmentById(R.id.viewPagerContainer);
+                    if (viewPagerFragment != null) {
+                        viewPagerFragment.filterViewPager(filterBooksArrayList);
+                    }
+                } else {
+                    BookListFragment bookListFragment = (BookListFragment) fm.findFragmentById(R.id.bookListContainer);
+                    if (bookListFragment != null) {
+                        bookListFragment.filterArrayAdapter(filterBooksArrayList);
+                    }
+                }
 
+            }
+        });
     }
 
     @Override
@@ -96,16 +122,24 @@ public class MainActivity extends FragmentActivity implements BookListFragment.O
 
     @Override
     public void OnBookSelected(String bookTitle) {
-        BookDetailsFragment bookDetailsFragment = (BookDetailsFragment) fm.findFragmentById(R.id.book_details_fragment);
 
+        BookDetailsFragment bookDetailsFragment = null;
         Book book = getBook(bookTitle);
+        Fragment bookListFragment = fm.findFragmentById(R.id.bookListContainer);
+
+        try {
+            FragmentManager child = bookListFragment.getFragmentManager();
+            bookDetailsFragment = (BookDetailsFragment) child.findFragmentById(R.id.BookDetailsContainer);
+        } catch (Exception e) {
+            Log.d("OnBookSelected", "Exception Thrown!");
+        }
 
         if (bookDetailsFragment != null) {
             bookDetailsFragment.updateDetailsView(book);
         } else {
             BookDetailsFragment newFragment = BookDetailsFragment.newInstance(book);
             fm.beginTransaction()
-                    .add(R.id.book_details_fragment, newFragment)
+                    .add(R.id.BookDetailsContainer, newFragment)
                     .commit();
         }
     }
@@ -116,6 +150,21 @@ public class MainActivity extends FragmentActivity implements BookListFragment.O
                 return book;
         }
         return null;
+    }
+
+    public ArrayList<Book> filterBooks(String search) {
+        ArrayList<Book> filteredResults = new ArrayList<>();
+
+        for (Book book : bookArrayList) {
+            if (book.title.contains(search))
+                filteredResults.add(book);
+            else if (book.author.contains(search))
+                filteredResults.add(book);
+            else if (String.valueOf(book.published).contains(search))
+                filteredResults.add(book);
+        }
+
+        return filteredResults;
     }
 
     public void getBookListData() {
@@ -181,15 +230,18 @@ public class MainActivity extends FragmentActivity implements BookListFragment.O
 
             fragmentContainer1 = fm.findFragmentById(R.id.viewPagerContainer);
             fragmentContainer2 = fm.findFragmentById(R.id.bookListContainer);
+
             if (fragmentContainer1 != null) {
+                ViewPagerFragment viewPagerFragment = ViewPagerFragment.newInstance(bookArrayList, bookArrayList);
                 fm.beginTransaction()
                         .remove(fragmentContainer1)
-                        .add(R.id.viewPagerContainer, ViewPagerFragment.newInstance(bookArrayList))
+                        .add(R.id.viewPagerContainer, viewPagerFragment)
                         .commit();
             } else if (fragmentContainer2 != null) {
+                BookListFragment bookListFragment = BookListFragment.newInstance(bookArrayList, bookArrayList);
                 fm.beginTransaction()
                         .remove(fragmentContainer2)
-                        .add(R.id.bookListContainer, BookListFragment.newInstance(bookArrayList))
+                        .add(R.id.bookListContainer, bookListFragment)
                         .commit();
             }
 

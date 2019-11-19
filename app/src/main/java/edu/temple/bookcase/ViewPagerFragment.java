@@ -16,18 +16,21 @@ public class ViewPagerFragment extends Fragment {
 
     private View view;
     private ArrayList<Book> books;
+    private ArrayList<Book> completeBooks;
     private ViewPager mPager;
     private MyFragmentStatePagerAdapter mAdapter;
+    private final static String completeBookListKey = "completeBookListKey";
     private final static String bookArrayListKey = "bookArrayListKey";
 
     public ViewPagerFragment() {
         // Required empty public constructor
     }
 
-    public static ViewPagerFragment newInstance(ArrayList<Book> bookArrayList) {
+    public static ViewPagerFragment newInstance(ArrayList<Book> filteredBookList, ArrayList<Book> completeBookList) {
         ViewPagerFragment fragment = new ViewPagerFragment();
         Bundle args = new Bundle();
-        args.putSerializable(bookArrayListKey, bookArrayList);
+        args.putSerializable(bookArrayListKey, filteredBookList);
+        args.putSerializable(completeBookListKey, completeBookList);
         fragment.setArguments(args);
         return fragment;
     }
@@ -35,11 +38,12 @@ public class ViewPagerFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if(getArguments() != null) {
-            books = (ArrayList<Book>)getArguments().getSerializable(bookArrayListKey);
+        Bundle args = getArguments();
+        if (args != null) {
+            books = (ArrayList<Book>) args.getSerializable(bookArrayListKey);
+            completeBooks = (ArrayList<Book>) args.getSerializable(completeBookListKey);
         }
     }
-
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -47,7 +51,7 @@ public class ViewPagerFragment extends Fragment {
         // Inflate the layout for this fragmentContainer1
         view = inflater.inflate(R.layout.fragment_view_pager, container, false);
 
-        if(books != null){
+        if (books != null) {
             mPager = view.findViewById(R.id.viewPager);
             mAdapter = new MyFragmentStatePagerAdapter(getChildFragmentManager(), books);
             mPager.setAdapter(mAdapter);
@@ -56,7 +60,24 @@ public class ViewPagerFragment extends Fragment {
         return view;
     }
 
+    public void filterViewPager(ArrayList<Book> filteredBooks) {
+        if (mAdapter != null) {
+            mAdapter = new MyFragmentStatePagerAdapter(getChildFragmentManager(), filteredBooks);
+            mAdapter.notifyDataSetChanged();
+            mPager.setAdapter(mAdapter);
+        }
+
+        if (getArguments() != null) {
+            getArguments().putSerializable(bookArrayListKey, filteredBooks);
+        }
+    }
+
     public ArrayList<Book> getBooks() {
         return this.books;
     }
+
+    public ArrayList<Book> getCompleteBooks() {
+        return this.completeBooks;
+    }
+
 }
