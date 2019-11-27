@@ -40,6 +40,10 @@ public class BookDetailsFragment extends Fragment {
         return fragment;
     }
 
+    public interface DetailsOnPlaySelectedListener {
+        void DetailsOnPlaySelected(int bookId);
+    }
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -60,6 +64,7 @@ public class BookDetailsFragment extends Fragment {
             bookAuthorTextView = view.findViewById(R.id.bookAuthorTextView);
             bookPublishedTextView = view.findViewById(R.id.bookPublishedTextView);
             playButton = view.findViewById(R.id.playButton);
+            playButton.setVisibility(View.VISIBLE);
 
             Picasso.with(getContext()).load(book.coverURL).into(bookCoverImageView);
             bookTitleTextView.setText(book.title);
@@ -78,20 +83,28 @@ public class BookDetailsFragment extends Fragment {
         return view;
     }
 
-    public interface DetailsOnPlaySelectedListener {
-        void DetailsOnPlaySelected(int bookId);
-    }
+    public void updateDetailsView(final Book book, DetailsOnPlaySelectedListener listener) {
 
-    public void updateDetailsView(Book book) {
         bookCoverImageView = view.findViewById(R.id.bookCoverImageView);
         bookTitleTextView = view.findViewById(R.id.bookTitleTextView);
         bookAuthorTextView = view.findViewById(R.id.bookAuthorTextView);
         bookPublishedTextView = view.findViewById(R.id.bookPublishedTextView);
+        playButton = view.findViewById(R.id.playButton);
+        playButton.setVisibility(View.VISIBLE);
 
         Picasso.with(getContext()).load(book.coverURL).into(bookCoverImageView);
         bookTitleTextView.setText(book.title);
         bookAuthorTextView.setText(book.author);
         bookPublishedTextView.setText(String.valueOf(book.published));
+
+        listenerCallback = listener;
+
+        playButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                listenerCallback.DetailsOnPlaySelected(book.id);
+            }
+        });
     }
 
 }

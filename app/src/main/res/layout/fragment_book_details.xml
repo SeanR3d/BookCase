@@ -9,14 +9,13 @@
 
     <ImageView
             android:id="@+id/bookCoverImageView"
-            android:layout_width="100dp"
-            android:layout_height="100dp"
+            android:layout_width="150dp"
+            android:layout_height="150dp"
             android:layout_gravity="center"
-            android:layout_marginTop="16dp"
-            android:layout_marginBottom="16dp"
+            android:layout_marginTop="24dp"
+            android:adjustViewBounds="true"
             android:contentDescription="@string/book_cover"
             android:scaleType="fitCenter"
-            app:layout_constraintBottom_toTopOf="@+id/bookTitleTextView"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.5"
             app:layout_constraintStart_toStartOf="parent"
@@ -65,8 +64,10 @@
             android:layout_height="50dp"
             android:layout_marginTop="28dp"
             android:background="@android:drawable/ic_media_play"
+            android:visibility="invisible"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.498"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/bookPublishedTextView" />
+            app:layout_constraintTop_toBottomOf="@+id/bookPublishedTextView"
+            tools:visibility="invisible" />
 </androidx.constraintlayout.widget.ConstraintLayout>

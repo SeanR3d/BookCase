@@ -29,7 +29,7 @@ import java.util.ArrayList;
 import edu.temple.audiobookplayer.AudiobookService;
 
 public class MainActivity extends FragmentActivity implements BookListFragment.OnBookSelectedListener,
-        ViewPagerFragment.OnPlaySelectedListener, BookListFragment.OnPlaySelectedListener {
+        ViewPagerFragment.OnPlaySelectedListener, BookDetailsFragment.DetailsOnPlaySelectedListener {
 
     FragmentManager fm;
     ArrayList<Book> bookArrayList;
@@ -44,7 +44,6 @@ public class MainActivity extends FragmentActivity implements BookListFragment.O
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
             binder = (AudiobookService.MediaControlBinder) service;
-
             connected = true;
         }
 
@@ -154,7 +153,6 @@ public class MainActivity extends FragmentActivity implements BookListFragment.O
         if (fragment instanceof BookListFragment) {
             BookListFragment bookListFragment = (BookListFragment) fragment;
             bookListFragment.setOnBookSelectedListener(this);
-            bookListFragment.setOnPlaySelectedListener(this);
         } else if (fragment instanceof ViewPagerFragment) {
             ViewPagerFragment viewPagerFragment = (ViewPagerFragment) fragment;
             viewPagerFragment.setOnPlaySelectedListener(this);
@@ -176,9 +174,9 @@ public class MainActivity extends FragmentActivity implements BookListFragment.O
         }
 
         if (bookDetailsFragment != null) {
-            bookDetailsFragment.updateDetailsView(book);
+            bookDetailsFragment.updateDetailsView(book, this);
         } else {
-            BookDetailsFragment newFragment = BookDetailsFragment.newInstance(book, bookListFragment);
+            BookDetailsFragment newFragment = BookDetailsFragment.newInstance(book, this);
             fm.beginTransaction()
                     .add(R.id.BookDetailsContainer, newFragment)
                     .commit();
@@ -186,12 +184,12 @@ public class MainActivity extends FragmentActivity implements BookListFragment.O
     }
 
     @Override
-    public void ListOnPlaySelected(int bookId) {
+    public void PagerOnPlaySelected(int bookId) {
         playBook(bookId);
     }
 
     @Override
-    public void PagerOnPlaySelected(int bookId) {
+    public void DetailsOnPlaySelected(int bookId) {
         playBook(bookId);
     }
 
@@ -199,17 +197,10 @@ public class MainActivity extends FragmentActivity implements BookListFragment.O
         if (connected) {
             binder.play(bookId);
 
-            try {
-                Thread.sleep(10000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+//            if (binder.isPlaying()) {
+//                binder.stop();
+//            }
 
-            if (binder.isPlaying()) {
-                binder.stop();
-            }
-
-            binder.stop();
         }
     }
 

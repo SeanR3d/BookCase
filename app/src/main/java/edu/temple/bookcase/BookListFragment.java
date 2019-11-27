@@ -15,7 +15,7 @@ import android.widget.ListView;
 
 import java.util.ArrayList;
 
-public class BookListFragment extends Fragment implements BookDetailsFragment.DetailsOnPlaySelectedListener {
+public class BookListFragment extends Fragment {
 
     private Context parent;
     private ArrayList<Book> books;
@@ -28,8 +28,6 @@ public class BookListFragment extends Fragment implements BookDetailsFragment.De
     private final static String bookArrayListKey = "bookArrayListKey";
     private final static String bookTitlesKey = "bookTitlesKey";
     private OnBookSelectedListener selectedCallback;
-    private OnPlaySelectedListener playListenerCallback;
-
 
     public BookListFragment() {
         // Required empty public constructor
@@ -79,18 +77,6 @@ public class BookListFragment extends Fragment implements BookDetailsFragment.De
 
     public interface OnBookSelectedListener {
         void OnBookSelected(String bookTitle);
-    }
-
-    public void setOnPlaySelectedListener(OnPlaySelectedListener callback) {
-        this.playListenerCallback = callback;
-    }
-
-    public interface OnPlaySelectedListener {
-        void ListOnPlaySelected(int bookId);
-    }
-    @Override
-    public void DetailsOnPlaySelected(int bookId) {
-        playListenerCallback.ListOnPlaySelected(bookId);
     }
 
     @Override
