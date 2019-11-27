@@ -12,6 +12,8 @@ import android.os.Message;
 import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
+import android.widget.SeekBar;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
@@ -39,6 +41,8 @@ public class MainActivity extends FragmentActivity implements BookListFragment.O
     Fragment fragmentContainer2;
     AudiobookService.MediaControlBinder binder;
     boolean connected;
+    TextView header;
+    SeekBar seekBar;
 
     ServiceConnection myConnection = new ServiceConnection() {
         @Override
@@ -146,6 +150,24 @@ public class MainActivity extends FragmentActivity implements BookListFragment.O
 
             }
         });
+
+        header = findViewById(R.id.headerTextView);
+        seekBar = findViewById(R.id.seekBar);
+        findViewById(R.id.pauseButton).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (binder.isPlaying())
+                    pauseBook();
+            }
+        });
+        findViewById(R.id.stopButton).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (binder.isPlaying())
+                    stopBook();
+            }
+        });
+
     }
 
     @Override
@@ -163,7 +185,7 @@ public class MainActivity extends FragmentActivity implements BookListFragment.O
     public void OnBookSelected(String bookTitle) {
 
         BookDetailsFragment bookDetailsFragment = null;
-        Book book = getBook(bookTitle);
+        Book book = getBookByTitle(bookTitle);
         BookListFragment bookListFragment = (BookListFragment) fm.findFragmentById(R.id.bookListContainer);
 
         try {
@@ -196,17 +218,36 @@ public class MainActivity extends FragmentActivity implements BookListFragment.O
     public void playBook(int bookId) {
         if (connected) {
             binder.play(bookId);
-
-//            if (binder.isPlaying()) {
-//                binder.stop();
-//            }
-
+            String bookTitle = getBookById(bookId).title;
+            header.setText(String.format("Now playing: %s", bookTitle));
         }
     }
 
-    public Book getBook(String bookTitle) {
+    public void pauseBook() {
+        if (connected) {
+            binder.pause();
+            header.setText("Paused");
+        }
+    }
+
+    public void stopBook() {
+        if (connected) {
+            binder.stop();
+            header.setText("Stopped");
+        }
+    }
+
+    public Book getBookByTitle(String bookTitle) {
         for (Book book : bookArrayList) {
             if (book.title.equals(bookTitle))
+                return book;
+        }
+        return null;
+    }
+
+    public Book getBookById(int bookId) {
+        for (Book book : bookArrayList) {
+            if (book.id == bookId)
                 return book;
         }
         return null;
