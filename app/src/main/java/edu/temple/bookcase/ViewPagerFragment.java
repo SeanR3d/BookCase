@@ -12,7 +12,7 @@ import android.view.ViewGroup;
 
 import java.util.ArrayList;
 
-public class ViewPagerFragment extends Fragment {
+public class ViewPagerFragment extends Fragment implements BookDetailsFragment.DetailsOnPlaySelectedListener {
 
     private View view;
     private ArrayList<Book> books;
@@ -21,6 +21,7 @@ public class ViewPagerFragment extends Fragment {
     private MyFragmentStatePagerAdapter mAdapter;
     private final static String completeBookListKey = "completeBookListKey";
     private final static String bookArrayListKey = "bookArrayListKey";
+    private OnPlaySelectedListener listenerCallback;
 
     public ViewPagerFragment() {
         // Required empty public constructor
@@ -53,7 +54,7 @@ public class ViewPagerFragment extends Fragment {
 
         if (books != null) {
             mPager = view.findViewById(R.id.viewPager);
-            mAdapter = new MyFragmentStatePagerAdapter(getChildFragmentManager(), books);
+            mAdapter = new MyFragmentStatePagerAdapter(getChildFragmentManager(), books, this);
             mPager.setAdapter(mAdapter);
         }
 
@@ -62,7 +63,7 @@ public class ViewPagerFragment extends Fragment {
 
     public void filterViewPager(ArrayList<Book> filteredBooks) {
         if (mAdapter != null) {
-            mAdapter = new MyFragmentStatePagerAdapter(getChildFragmentManager(), filteredBooks);
+            mAdapter = new MyFragmentStatePagerAdapter(getChildFragmentManager(), filteredBooks, this);
             mAdapter.notifyDataSetChanged();
             mPager.setAdapter(mAdapter);
         }
@@ -80,4 +81,16 @@ public class ViewPagerFragment extends Fragment {
         return this.completeBooks;
     }
 
+    public void setOnPlaySelectedListener(OnPlaySelectedListener callback) {
+        this.listenerCallback = callback;
+    }
+
+    public interface OnPlaySelectedListener {
+        void PagerOnPlaySelected(int bookId);
+    }
+
+    @Override
+    public void DetailsOnPlaySelected(int bookId) {
+        listenerCallback.PagerOnPlaySelected(bookId);
+    }
 }

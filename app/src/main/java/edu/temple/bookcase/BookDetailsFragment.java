@@ -8,6 +8,7 @@ import androidx.fragment.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -23,13 +24,16 @@ public class BookDetailsFragment extends Fragment {
     private TextView bookTitleTextView;
     private TextView bookAuthorTextView;
     private TextView bookPublishedTextView;
+    private Button playButton;
+    private DetailsOnPlaySelectedListener listenerCallback;
 
     public BookDetailsFragment() {
         // Required empty public constructor
     }
 
-    public static BookDetailsFragment newInstance(Book book) {
+    public static BookDetailsFragment newInstance(Book book, DetailsOnPlaySelectedListener listener) {
         BookDetailsFragment fragment = new BookDetailsFragment();
+        fragment.listenerCallback = listener;
         Bundle args = new Bundle();
         args.putSerializable(bookObjKey, book);
         fragment.setArguments(args);
@@ -55,15 +59,27 @@ public class BookDetailsFragment extends Fragment {
             bookTitleTextView = view.findViewById(R.id.bookTitleTextView);
             bookAuthorTextView = view.findViewById(R.id.bookAuthorTextView);
             bookPublishedTextView = view.findViewById(R.id.bookPublishedTextView);
+            playButton = view.findViewById(R.id.playButton);
 
             Picasso.with(getContext()).load(book.coverURL).into(bookCoverImageView);
             bookTitleTextView.setText(book.title);
             bookAuthorTextView.setText(book.author);
             bookPublishedTextView.setText(String.valueOf(book.published));
 
+            playButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    listenerCallback.DetailsOnPlaySelected(book.id);
+                }
+            });
+
         }
 
         return view;
+    }
+
+    public interface DetailsOnPlaySelectedListener {
+        void DetailsOnPlaySelected(int bookId);
     }
 
     public void updateDetailsView(Book book) {

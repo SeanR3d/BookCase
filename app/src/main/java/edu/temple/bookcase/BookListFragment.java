@@ -15,12 +15,8 @@ import android.widget.ListView;
 
 import java.util.ArrayList;
 
-/**
- * A simple {@link Fragment} subclass.
- */
-public class BookListFragment extends Fragment {
+public class BookListFragment extends Fragment implements BookDetailsFragment.DetailsOnPlaySelectedListener {
 
-    private OnBookSelectedListener callback;
     private Context parent;
     private ArrayList<Book> books;
     private ArrayList<Book> completeBooks;
@@ -31,6 +27,8 @@ public class BookListFragment extends Fragment {
     private final static String completeBookListKey = "completeBookListKey";
     private final static String bookArrayListKey = "bookArrayListKey";
     private final static String bookTitlesKey = "bookTitlesKey";
+    private OnBookSelectedListener selectedCallback;
+    private OnPlaySelectedListener playListenerCallback;
 
 
     public BookListFragment() {
@@ -76,11 +74,23 @@ public class BookListFragment extends Fragment {
     }
 
     public void setOnBookSelectedListener(OnBookSelectedListener callback) {
-        this.callback = callback;
+        this.selectedCallback = callback;
     }
 
     public interface OnBookSelectedListener {
         void OnBookSelected(String bookTitle);
+    }
+
+    public void setOnPlaySelectedListener(OnPlaySelectedListener callback) {
+        this.playListenerCallback = callback;
+    }
+
+    public interface OnPlaySelectedListener {
+        void ListOnPlaySelected(int bookId);
+    }
+    @Override
+    public void DetailsOnPlaySelected(int bookId) {
+        playListenerCallback.ListOnPlaySelected(bookId);
     }
 
     @Override
@@ -98,7 +108,7 @@ public class BookListFragment extends Fragment {
                 @Override
                 public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                     String bookTitle = adapter.getItem(position);
-                    callback.OnBookSelected(bookTitle);
+                    selectedCallback.OnBookSelected(bookTitle);
                 }
             });
         }

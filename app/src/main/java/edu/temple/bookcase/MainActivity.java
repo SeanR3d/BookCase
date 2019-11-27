@@ -1,8 +1,13 @@
 package edu.temple.bookcase;
 
 
+import android.content.ComponentName;
+import android.content.Context;
+import android.content.Intent;
+import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.IBinder;
 import android.os.Message;
 import android.util.Log;
 import android.view.View;
@@ -21,8 +26,10 @@ import java.io.InputStreamReader;
 import java.net.URL;
 import java.util.ArrayList;
 
+import edu.temple.audiobookplayer.AudiobookService;
 
-public class MainActivity extends FragmentActivity implements BookListFragment.OnBookSelectedListener {
+public class MainActivity extends FragmentActivity implements BookListFragment.OnBookSelectedListener,
+        ViewPagerFragment.OnPlaySelectedListener, BookListFragment.OnPlaySelectedListener {
 
     FragmentManager fm;
     ArrayList<Book> bookArrayList;
@@ -30,11 +37,41 @@ public class MainActivity extends FragmentActivity implements BookListFragment.O
     boolean onePane;
     Fragment fragmentContainer1;
     Fragment fragmentContainer2;
+    AudiobookService.MediaControlBinder binder;
+    boolean connected;
+
+    ServiceConnection myConnection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            binder = (AudiobookService.MediaControlBinder) service;
+
+            connected = true;
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            connected = false;
+        }
+    };
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        Intent intent = new Intent(this, AudiobookService.class);
+        bindService(intent, myConnection, Context.BIND_AUTO_CREATE);
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        unbindService(myConnection);
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
         fm = getSupportFragmentManager();
 
         onePane = findViewById(R.id.viewPagerContainer) != null;
@@ -117,6 +154,10 @@ public class MainActivity extends FragmentActivity implements BookListFragment.O
         if (fragment instanceof BookListFragment) {
             BookListFragment bookListFragment = (BookListFragment) fragment;
             bookListFragment.setOnBookSelectedListener(this);
+            bookListFragment.setOnPlaySelectedListener(this);
+        } else if (fragment instanceof ViewPagerFragment) {
+            ViewPagerFragment viewPagerFragment = (ViewPagerFragment) fragment;
+            viewPagerFragment.setOnPlaySelectedListener(this);
         }
     }
 
@@ -125,7 +166,7 @@ public class MainActivity extends FragmentActivity implements BookListFragment.O
 
         BookDetailsFragment bookDetailsFragment = null;
         Book book = getBook(bookTitle);
-        Fragment bookListFragment = fm.findFragmentById(R.id.bookListContainer);
+        BookListFragment bookListFragment = (BookListFragment) fm.findFragmentById(R.id.bookListContainer);
 
         try {
             FragmentManager child = bookListFragment.getFragmentManager();
@@ -137,10 +178,38 @@ public class MainActivity extends FragmentActivity implements BookListFragment.O
         if (bookDetailsFragment != null) {
             bookDetailsFragment.updateDetailsView(book);
         } else {
-            BookDetailsFragment newFragment = BookDetailsFragment.newInstance(book);
+            BookDetailsFragment newFragment = BookDetailsFragment.newInstance(book, bookListFragment);
             fm.beginTransaction()
                     .add(R.id.BookDetailsContainer, newFragment)
                     .commit();
+        }
+    }
+
+    @Override
+    public void ListOnPlaySelected(int bookId) {
+        playBook(bookId);
+    }
+
+    @Override
+    public void PagerOnPlaySelected(int bookId) {
+        playBook(bookId);
+    }
+
+    public void playBook(int bookId) {
+        if (connected) {
+            binder.play(bookId);
+
+            try {
+                Thread.sleep(10000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+
+            if (binder.isPlaying()) {
+                binder.stop();
+            }
+
+            binder.stop();
         }
     }
 
@@ -218,7 +287,8 @@ public class MainActivity extends FragmentActivity implements BookListFragment.O
                             obj.getString("title"),
                             obj.getString("author"),
                             obj.getInt("published"),
-                            obj.getString("cover_url")
+                            obj.getString("cover_url"),
+                            obj.getInt("duration")
                     );
                     bookArrayList.add(book);
                 }
@@ -248,4 +318,5 @@ public class MainActivity extends FragmentActivity implements BookListFragment.O
             return false;
         }
     });
+
 }
