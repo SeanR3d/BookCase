@@ -29,6 +29,7 @@ import java.net.URL;
 import java.util.ArrayList;
 
 import edu.temple.audiobookplayer.AudiobookService;
+import edu.temple.audiobookplayer.AudiobookService.BookProgress;
 
 public class MainActivity extends FragmentActivity implements BookListFragment.OnBookSelectedListener,
         ViewPagerFragment.OnPlaySelectedListener, BookDetailsFragment.DetailsOnPlaySelectedListener {
@@ -40,15 +41,18 @@ public class MainActivity extends FragmentActivity implements BookListFragment.O
     Fragment fragmentContainer1;
     Fragment fragmentContainer2;
     AudiobookService.MediaControlBinder binder;
+    AudiobookService.BookProgress bookProgress;
     boolean connected;
     TextView header;
     SeekBar seekBar;
+    int pausedBookId;
 
     ServiceConnection myConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
             binder = (AudiobookService.MediaControlBinder) service;
             connected = true;
+            binder.setProgressHandler(bookProgressHandler);
         }
 
         @Override
@@ -60,8 +64,7 @@ public class MainActivity extends FragmentActivity implements BookListFragment.O
     @Override
     public void onStart() {
         super.onStart();
-        Intent intent = new Intent(this, AudiobookService.class);
-        bindService(intent, myConnection, Context.BIND_AUTO_CREATE);
+        bindService(new Intent(this, AudiobookService.class), myConnection, Context.BIND_AUTO_CREATE);
     }
 
     @Override
@@ -153,18 +156,33 @@ public class MainActivity extends FragmentActivity implements BookListFragment.O
 
         header = findViewById(R.id.headerTextView);
         seekBar = findViewById(R.id.seekBar);
+        seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+                int progress = seekBar.getProgress();
+                binder.seekTo(progress);
+            }
+        });
+
         findViewById(R.id.pauseButton).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (binder.isPlaying())
-                    pauseBook();
+                pauseBook();
             }
         });
+
         findViewById(R.id.stopButton).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (binder.isPlaying())
-                    stopBook();
+                stopBook();
             }
         });
 
@@ -217,16 +235,34 @@ public class MainActivity extends FragmentActivity implements BookListFragment.O
 
     public void playBook(int bookId) {
         if (connected) {
+//            if (bookProgress != null) {
+//                binder.play(bookId, bookProgress.getProgress());
+//            } else {
+//                binder.play(bookId);
+//                seekBar.setMax(book.duration);
+//                seekBar.setProgress(0);
+//            }
+            Book book = getBookById(bookId);
             binder.play(bookId);
-            String bookTitle = getBookById(bookId).title;
-            header.setText(String.format("Now playing: %s", bookTitle));
+            seekBar.setMax(book.duration);
+            seekBar.setProgress(0);
+            header.setText(String.format("Now playing: %s", book.title));
         }
     }
 
     public void pauseBook() {
         if (connected) {
-            binder.pause();
-            header.setText("Paused");
+            if (binder.isPlaying()) {
+                pausedBookId = bookProgress.getBookId();
+                binder.pause();
+                header.setText("Paused");
+            } else {
+                if (pausedBookId > 0) {
+                    binder.play(pausedBookId, seekBar.getProgress());
+                    header.setText("Unpaused");
+                    pausedBookId = 0;
+                }
+            }
         }
     }
 
@@ -349,6 +385,29 @@ public class MainActivity extends FragmentActivity implements BookListFragment.O
 
             return false;
         }
+    });
+
+    Handler bookProgressHandler = new Handler(new Handler.Callback() {
+        @Override
+        public boolean handleMessage(@NonNull Message msg) {
+            bookProgress = (BookProgress) msg.obj;
+            if (bookProgress != null) {
+                int id = bookProgress.getBookId();
+                int progress = bookProgress.getProgress();
+                seekBar.setProgress(progress);
+            }
+//            if (binder != null) {
+//                if (!binder.isPlaying())
+//                    binder.play(id, progress);
+//                else{
+//                    seekBar.setProgress(progress);
+//                }
+//            }else
+//                System.out.println("hi");
+
+            return false;
+        }
+
     });
 
 }
