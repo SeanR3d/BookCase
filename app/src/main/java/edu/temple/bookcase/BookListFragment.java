@@ -21,12 +21,14 @@ public class BookListFragment extends Fragment {
     private ArrayList<Book> books;
     private ArrayList<Book> completeBooks;
     private ArrayList<String> bookTitles;
+    private int currentBookId;
     private View view;
     private ListView listView;
     private ArrayAdapter<String> adapter;
     private final static String completeBookListKey = "completeBookListKey";
     private final static String bookArrayListKey = "bookArrayListKey";
     private final static String bookTitlesKey = "bookTitlesKey";
+    private final static String currentBookIdKey = "currentBookIdKey";
     private OnBookSelectedListener selectedCallback;
 
     public BookListFragment() {
@@ -39,15 +41,14 @@ public class BookListFragment extends Fragment {
         this.parent = context;
     }
 
-    public static BookListFragment newInstance(ArrayList<Book> filteredBookList, ArrayList<Book> completeBookList) {
-
+    public static BookListFragment newInstance(ArrayList<Book> filteredBookList, ArrayList<Book> completeBookList, int currentBookId) {
         ArrayList<String> bookTitles = getBookTitlesList(filteredBookList);
-
         BookListFragment fragment = new BookListFragment();
         Bundle args = new Bundle();
         args.putSerializable(bookArrayListKey, filteredBookList);
         args.putSerializable(completeBookListKey, completeBookList);
         args.putSerializable(bookTitlesKey, bookTitles);
+        args.putInt(currentBookIdKey, currentBookId);
         fragment.setArguments(args);
 
         return fragment;
@@ -76,7 +77,7 @@ public class BookListFragment extends Fragment {
     }
 
     public interface OnBookSelectedListener {
-        void OnBookSelected(String bookTitle);
+        void onBookSelected(String bookTitle);
     }
 
     @Override
@@ -89,12 +90,16 @@ public class BookListFragment extends Fragment {
             listView = view.findViewById(R.id.bookListView);
             adapter = new ArrayAdapter<>(parent, android.R.layout.simple_list_item_1, bookTitles);
             listView.setAdapter(adapter);
+            if(currentBookId > 0) {
+                listView.setSelection(currentBookId);
+            }
 
             listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                 @Override
                 public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                     String bookTitle = adapter.getItem(position);
-                    selectedCallback.OnBookSelected(bookTitle);
+                    selectedCallback.onBookSelected(bookTitle);
+                    currentBookId = position;
                 }
             });
         }
@@ -121,6 +126,10 @@ public class BookListFragment extends Fragment {
 
     public ArrayList<Book> getCompleteBooks() {
         return this.completeBooks;
+    }
+
+    public int getCurrentBookId() {
+        return this.currentBookId;
     }
 
 }

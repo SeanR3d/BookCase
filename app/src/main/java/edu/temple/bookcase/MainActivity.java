@@ -45,7 +45,11 @@ public class MainActivity extends FragmentActivity implements BookListFragment.O
     boolean connected;
     TextView header;
     SeekBar seekBar;
+    int currentBookProgress;
+    int currentBookId;
     int pausedBookId;
+    final static String bookProgressKey = "bookProgressKey";
+    final static String currentBookIdKey = "currentBookIdKey";
 
     ServiceConnection myConnection = new ServiceConnection() {
         @Override
@@ -70,7 +74,25 @@ public class MainActivity extends FragmentActivity implements BookListFragment.O
     @Override
     public void onStop() {
         super.onStop();
-        unbindService(myConnection);
+        if (connected) {
+            unbindService(myConnection);
+            connected = false;
+        }
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle savedInstanceState) {
+        super.onSaveInstanceState(savedInstanceState);
+        savedInstanceState.putInt(currentBookIdKey, currentBookId);
+        savedInstanceState.putInt(bookProgressKey, currentBookProgress);
+    }
+
+    @Override
+    public void onRestoreInstanceState(Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+        currentBookId = savedInstanceState.getInt(currentBookIdKey);
+        currentBookProgress = savedInstanceState.getInt(bookProgressKey);
+        Log.d("Restore", "Restored: " + currentBookId + " " + currentBookProgress + " ");
     }
 
     @Override
@@ -96,7 +118,8 @@ public class MainActivity extends FragmentActivity implements BookListFragment.O
                 if (fragmentContainer2 != null) {
                     bookArrayList = ((BookListFragment) fragmentContainer2).getCompleteBooks();
                     prevFilterBookList = ((BookListFragment) fragmentContainer2).getBooks();
-                    ViewPagerFragment viewPagerFragment = ViewPagerFragment.newInstance(prevFilterBookList, bookArrayList);
+                    currentBookId = ((BookListFragment) fragmentContainer2).getCurrentBookId();
+                    ViewPagerFragment viewPagerFragment = ViewPagerFragment.newInstance(prevFilterBookList, bookArrayList, currentBookId);
                     fm.beginTransaction()
                             .remove(fragmentContainer2)
                             .add(R.id.viewPagerContainer, viewPagerFragment)
@@ -113,12 +136,12 @@ public class MainActivity extends FragmentActivity implements BookListFragment.O
                 if (fragmentContainer1 != null) {
                     bookArrayList = ((ViewPagerFragment) fragmentContainer1).getCompleteBooks();
                     prevFilterBookList = ((ViewPagerFragment) fragmentContainer1).getBooks();
-                    BookListFragment bookListFragment = BookListFragment.newInstance(prevFilterBookList, bookArrayList);
+                    currentBookId = ((ViewPagerFragment) fragmentContainer1).getCurrentBookId();
+                    BookListFragment bookListFragment = BookListFragment.newInstance(prevFilterBookList, bookArrayList, currentBookId);
                     fm.beginTransaction()
                             .remove(fragmentContainer1)
                             .add(R.id.bookListContainer, bookListFragment)
                             .commit();
-
                 } else {
                     fm.beginTransaction()
                             .add(R.id.bookListContainer, new BookListFragment())
@@ -128,8 +151,9 @@ public class MainActivity extends FragmentActivity implements BookListFragment.O
                 }
             } else {
                 bookArrayList = ((BookListFragment) fragmentContainer2).getBooks();
+                currentBookId = ((BookListFragment) fragmentContainer2).getCurrentBookId();
                 fm.beginTransaction()
-                        .replace(R.id.bookListContainer, BookListFragment.newInstance(bookArrayList, bookArrayList))
+                        .replace(R.id.bookListContainer, BookListFragment.newInstance(bookArrayList, bookArrayList, currentBookId))
                         .commit();
             }
         }
@@ -193,6 +217,7 @@ public class MainActivity extends FragmentActivity implements BookListFragment.O
         if (fragment instanceof BookListFragment) {
             BookListFragment bookListFragment = (BookListFragment) fragment;
             bookListFragment.setOnBookSelectedListener(this);
+
         } else if (fragment instanceof ViewPagerFragment) {
             ViewPagerFragment viewPagerFragment = (ViewPagerFragment) fragment;
             viewPagerFragment.setOnPlaySelectedListener(this);
@@ -200,7 +225,7 @@ public class MainActivity extends FragmentActivity implements BookListFragment.O
     }
 
     @Override
-    public void OnBookSelected(String bookTitle) {
+    public void onBookSelected(String bookTitle) {
 
         BookDetailsFragment bookDetailsFragment = null;
         Book book = getBookByTitle(bookTitle);
@@ -210,7 +235,7 @@ public class MainActivity extends FragmentActivity implements BookListFragment.O
             FragmentManager child = bookListFragment.getFragmentManager();
             bookDetailsFragment = (BookDetailsFragment) child.findFragmentById(R.id.BookDetailsContainer);
         } catch (Exception e) {
-            Log.d("OnBookSelected", "Exception Thrown!");
+            Log.d("onBookSelected", "Exception Thrown!");
         }
 
         if (bookDetailsFragment != null) {
@@ -224,13 +249,15 @@ public class MainActivity extends FragmentActivity implements BookListFragment.O
     }
 
     @Override
-    public void PagerOnPlaySelected(int bookId) {
+    public void pagerOnPlaySelected(int bookId) {
         playBook(bookId);
+        displayAudioButtons();
     }
 
     @Override
-    public void DetailsOnPlaySelected(int bookId) {
+    public void detailsOnPlaySelected(int bookId) {
         playBook(bookId);
+        displayAudioButtons();
     }
 
     public void playBook(int bookId) {
@@ -244,6 +271,7 @@ public class MainActivity extends FragmentActivity implements BookListFragment.O
 //            }
             Book book = getBookById(bookId);
             binder.play(bookId);
+            currentBookId = book.id;
             seekBar.setMax(book.duration);
             seekBar.setProgress(0);
             header.setText(String.format("Now playing: %s", book.title));
@@ -270,6 +298,7 @@ public class MainActivity extends FragmentActivity implements BookListFragment.O
         if (connected) {
             binder.stop();
             header.setText("Stopped");
+            currentBookId = -1;
         }
     }
 
@@ -287,6 +316,12 @@ public class MainActivity extends FragmentActivity implements BookListFragment.O
                 return book;
         }
         return null;
+    }
+
+    public void displayAudioButtons() {
+        seekBar.setVisibility(View.VISIBLE);
+        findViewById(R.id.pauseButton).setVisibility(View.VISIBLE);
+        findViewById(R.id.stopButton).setVisibility(View.VISIBLE);
     }
 
     public ArrayList<Book> filterBooks(String search) {
@@ -370,13 +405,13 @@ public class MainActivity extends FragmentActivity implements BookListFragment.O
             fragmentContainer2 = fm.findFragmentById(R.id.bookListContainer);
 
             if (fragmentContainer1 != null) {
-                ViewPagerFragment viewPagerFragment = ViewPagerFragment.newInstance(bookArrayList, bookArrayList);
+                ViewPagerFragment viewPagerFragment = ViewPagerFragment.newInstance(bookArrayList, bookArrayList, currentBookId);
                 fm.beginTransaction()
                         .remove(fragmentContainer1)
                         .add(R.id.viewPagerContainer, viewPagerFragment)
                         .commit();
             } else if (fragmentContainer2 != null) {
-                BookListFragment bookListFragment = BookListFragment.newInstance(bookArrayList, bookArrayList);
+                BookListFragment bookListFragment = BookListFragment.newInstance(bookArrayList, bookArrayList, currentBookId);
                 fm.beginTransaction()
                         .remove(fragmentContainer2)
                         .add(R.id.bookListContainer, bookListFragment)
@@ -392,10 +427,11 @@ public class MainActivity extends FragmentActivity implements BookListFragment.O
         public boolean handleMessage(@NonNull Message msg) {
             bookProgress = (BookProgress) msg.obj;
             if (bookProgress != null) {
-                int id = bookProgress.getBookId();
-                int progress = bookProgress.getProgress();
-                seekBar.setProgress(progress);
+                currentBookId = bookProgress.getBookId();
+                currentBookProgress = bookProgress.getProgress();
+                seekBar.setProgress(currentBookProgress);
             }
+            Log.d("handler", "book: " + currentBookId + " -- progress: " + currentBookProgress + ". ");
 //            if (binder != null) {
 //                if (!binder.isPlaying())
 //                    binder.play(id, progress);

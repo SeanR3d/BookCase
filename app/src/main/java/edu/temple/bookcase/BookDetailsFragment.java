@@ -41,7 +41,7 @@ public class BookDetailsFragment extends Fragment {
     }
 
     public interface DetailsOnPlaySelectedListener {
-        void DetailsOnPlaySelected(int bookId);
+        void detailsOnPlaySelected(int bookId);
     }
 
     @Override
@@ -74,7 +74,7 @@ public class BookDetailsFragment extends Fragment {
             playButton.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    listenerCallback.DetailsOnPlaySelected(book.id);
+                    listenerCallback.detailsOnPlaySelected(book.id);
                 }
             });
 
@@ -102,7 +102,7 @@ public class BookDetailsFragment extends Fragment {
         playButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                listenerCallback.DetailsOnPlaySelected(book.id);
+                listenerCallback.detailsOnPlaySelected(book.id);
             }
         });
     }

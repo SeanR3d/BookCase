@@ -17,21 +17,24 @@ public class ViewPagerFragment extends Fragment implements BookDetailsFragment.D
     private View view;
     private ArrayList<Book> books;
     private ArrayList<Book> completeBooks;
+    private int currentBookId;
     private ViewPager mPager;
     private MyFragmentStatePagerAdapter mAdapter;
     private final static String completeBookListKey = "completeBookListKey";
     private final static String bookArrayListKey = "bookArrayListKey";
+    private final static String currentBookIdKey = "currentBookIdKey";
     private OnPlaySelectedListener listenerCallback;
 
     public ViewPagerFragment() {
         // Required empty public constructor
     }
 
-    public static ViewPagerFragment newInstance(ArrayList<Book> filteredBookList, ArrayList<Book> completeBookList) {
+    public static ViewPagerFragment newInstance(ArrayList<Book> filteredBookList, ArrayList<Book> completeBookList, int currentBookId) {
         ViewPagerFragment fragment = new ViewPagerFragment();
         Bundle args = new Bundle();
         args.putSerializable(bookArrayListKey, filteredBookList);
         args.putSerializable(completeBookListKey, completeBookList);
+        args.putInt(currentBookIdKey, currentBookId);
         fragment.setArguments(args);
         return fragment;
     }
@@ -43,6 +46,7 @@ public class ViewPagerFragment extends Fragment implements BookDetailsFragment.D
         if (args != null) {
             books = (ArrayList<Book>) args.getSerializable(bookArrayListKey);
             completeBooks = (ArrayList<Book>) args.getSerializable(completeBookListKey);
+            currentBookId = args.getInt(currentBookIdKey);
         }
     }
 
@@ -56,6 +60,26 @@ public class ViewPagerFragment extends Fragment implements BookDetailsFragment.D
             mPager = view.findViewById(R.id.viewPager);
             mAdapter = new MyFragmentStatePagerAdapter(getChildFragmentManager(), books, this);
             mPager.setAdapter(mAdapter);
+            mPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
+                @Override
+                public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+
+                }
+
+                @Override
+                public void onPageSelected(int position) {
+                    currentBookId = position;
+                }
+
+                @Override
+                public void onPageScrollStateChanged(int state) {
+
+                }
+            });
+
+            if (currentBookId > 0) {
+                mPager.setCurrentItem(currentBookId);
+            }
         }
 
         return view;
@@ -81,16 +105,20 @@ public class ViewPagerFragment extends Fragment implements BookDetailsFragment.D
         return this.completeBooks;
     }
 
+    public int getCurrentBookId() {
+        return this.currentBookId;
+    }
+
     public void setOnPlaySelectedListener(OnPlaySelectedListener callback) {
         this.listenerCallback = callback;
     }
 
     public interface OnPlaySelectedListener {
-        void PagerOnPlaySelected(int bookId);
+        void pagerOnPlaySelected(int bookId);
     }
 
     @Override
-    public void DetailsOnPlaySelected(int bookId) {
-        listenerCallback.PagerOnPlaySelected(bookId);
+    public void detailsOnPlaySelected(int bookId) {
+        listenerCallback.pagerOnPlaySelected(bookId);
     }
 }

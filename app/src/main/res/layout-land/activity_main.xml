@@ -49,16 +49,18 @@
             app:layout_constraintTop_toTopOf="parent" />
 
     <Button
-        android:id="@+id/stopButton"
-        style="@style/Widget.AppCompat.Button"
-        android:layout_width="35dp"
-        android:layout_height="35dp"
-        android:layout_marginStart="8dp"
-        android:layout_marginBottom="24dp"
-        android:background="@android:drawable/gallery_thumb"
-        android:backgroundTint="#B3B3B3"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toEndOf="@+id/spacerButton" />
+            android:id="@+id/stopButton"
+            style="@style/Widget.AppCompat.Button"
+            android:layout_width="35dp"
+            android:layout_height="35dp"
+            android:layout_marginStart="8dp"
+            android:layout_marginBottom="24dp"
+            android:background="@android:drawable/gallery_thumb"
+            android:backgroundTint="#B3B3B3"
+            android:visibility="invisible"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/spacerButton"
+            tools:visibility="invisible" />
 
     <Button
             android:id="@+id/pauseButton"
@@ -67,8 +69,10 @@
             android:layout_marginEnd="8dp"
             android:layout_marginBottom="16dp"
             android:background="@android:drawable/ic_media_pause"
+            android:visibility="invisible"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="@+id/spacerButton" />
+            app:layout_constraintEnd_toStartOf="@+id/spacerButton"
+            tools:visibility="invisible" />
 
     <SeekBar
             android:id="@+id/seekBar"
@@ -77,10 +81,12 @@
             android:layout_marginStart="32dp"
             android:layout_marginEnd="32dp"
             android:layout_marginBottom="8dp"
+            android:visibility="invisible"
             app:layout_constraintBottom_toTopOf="@+id/spacerButton"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.0"
-            app:layout_constraintStart_toEndOf="@+id/bookListContainer" />
+            app:layout_constraintStart_toEndOf="@+id/bookListContainer"
+            tools:visibility="invisible" />
 
     <TextView
             android:id="@+id/headerTextView"
