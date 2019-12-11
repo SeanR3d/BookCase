@@ -70,4 +70,5 @@
         app:layout_constraintHorizontal_bias="0.498"
         app:layout_constraintStart_toStartOf="parent"
         tools:visibility="invisible" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -5,12 +5,14 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.icu.util.Output;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
 import android.util.Log;
 import android.view.View;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.SeekBar;
 import android.widget.TextView;
@@ -23,9 +25,21 @@ import androidx.fragment.app.FragmentManager;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.io.BufferedInputStream;
 import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.OutputStream;
 import java.net.URL;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 
 import edu.temple.audiobookplayer.AudiobookService;
@@ -46,11 +60,19 @@ public class MainActivity extends FragmentActivity implements BookListFragment.O
     boolean connected;
     TextView header;
     SeekBar seekBar;
+    Button downloadButton;
     int currentBookProgress;
     int currentBookId;
     int pausedBookId;
     final static String bookProgressKey = "bookProgressKey";
     final static String currentBookIdKey = "currentBookIdKey";
+    final static String pauseText = "Paused";
+    final static String stopText = "Stopped";
+    final static String nowPlayingText = "Now Playing: ";
+    final static String deleteText = "Delete";
+    final static String downloadText = "Download";
+    String currentBookFileName = "currentBook";
+    Book currentBook;
 
     ServiceConnection myConnection = new ServiceConnection() {
         @Override
@@ -80,21 +102,22 @@ public class MainActivity extends FragmentActivity implements BookListFragment.O
             unbindService(myConnection);
             connected = false;
         }
+        currentBook.setProgress(0);
     }
 
     @Override
     public void onSaveInstanceState(Bundle savedInstanceState) {
         super.onSaveInstanceState(savedInstanceState);
-        savedInstanceState.putInt(currentBookIdKey, currentBookId);
-        savedInstanceState.putInt(bookProgressKey, currentBookProgress);
+//        savedInstanceState.putInt(currentBookIdKey, currentBookId);
+//        savedInstanceState.putInt(bookProgressKey, currentBookProgress);
     }
 
     @Override
     public void onRestoreInstanceState(Bundle savedInstanceState) {
         super.onRestoreInstanceState(savedInstanceState);
-        currentBookId = savedInstanceState.getInt(currentBookIdKey);
-        currentBookProgress = savedInstanceState.getInt(bookProgressKey);
-        Log.d("Restore", "Restored: " + currentBookId + " " + currentBookProgress + " ");
+//        currentBookId = savedInstanceState.getInt(currentBookIdKey);
+//        currentBookProgress = savedInstanceState.getInt(bookProgressKey);
+//        Log.d("Restore", "Restored: " + currentBookId + " " + currentBookProgress + " ");
     }
 
     @Override
@@ -102,8 +125,9 @@ public class MainActivity extends FragmentActivity implements BookListFragment.O
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        fm = getSupportFragmentManager();
+        currentBook = getBookFromStorage(currentBookFileName);
 
+        fm = getSupportFragmentManager();
         onePane = findViewById(R.id.viewPagerContainer) != null;
         fragmentContainer1 = fm.findFragmentById(R.id.viewPagerContainer);
         fragmentContainer2 = fm.findFragmentById(R.id.bookListContainer);
@@ -121,6 +145,8 @@ public class MainActivity extends FragmentActivity implements BookListFragment.O
                     bookArrayList = ((BookListFragment) fragmentContainer2).getCompleteBooks();
                     prevFilterBookList = ((BookListFragment) fragmentContainer2).getBooks();
                     currentBookId = ((BookListFragment) fragmentContainer2).getCurrentBookId();
+                    if (currentBook != null)
+                        currentBookId = currentBook.id;
                     ViewPagerFragment viewPagerFragment = ViewPagerFragment.newInstance(prevFilterBookList, bookArrayList, currentBookId);
                     fm.beginTransaction()
                             .remove(fragmentContainer2)
@@ -212,6 +238,20 @@ public class MainActivity extends FragmentActivity implements BookListFragment.O
             }
         });
 
+        downloadButton = findViewById(R.id.downloadButton);
+        if (true) {  // TODO replace
+            downloadButton.setText(deleteText);
+        } else {
+            downloadButton.setText(downloadText);
+        }
+
+        findViewById(R.id.downloadButton).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                downloadBookData(currentBook.id);
+            }
+        });
+
     }
 
     @Override
@@ -264,20 +304,14 @@ public class MainActivity extends FragmentActivity implements BookListFragment.O
 
     public void playBook(int bookId) {
         if (connected) {
-//            if (bookProgress != null) {
-//                binder.play(bookId, bookProgress.getProgress());
-//            } else {
-//                binder.play(bookId);
-//                seekBar.setMax(book.duration);
-//                seekBar.setProgress(0);
-//            }
-            Book book = getBookById(bookId);
+            currentBook = getBookById(bookId);
             startService(serviceIntent);
             binder.play(bookId);
-            currentBookId = book.id;
-            seekBar.setMax(book.duration);
+            currentBookId = currentBook.id;
+            seekBar.setMax(currentBook.duration);
             seekBar.setProgress(0);
-            header.setText(String.format("Now playing: %s", book.title));
+            header.setText(String.format("%s %s", nowPlayingText, currentBook.title));
+            currentBook.saveBookToStorage(this, currentBookFileName);
         }
     }
 
@@ -286,12 +320,13 @@ public class MainActivity extends FragmentActivity implements BookListFragment.O
             if (binder.isPlaying()) {
                 pausedBookId = bookProgress.getBookId();
                 binder.pause();
-                header.setText("Paused");
+                header.setText(pauseText);
+                currentBook.setProgress(bookProgress.getProgress());
+                currentBook.saveBookToStorage(this, currentBookFileName);
             } else {
                 if (pausedBookId > 0) {
                     binder.play(pausedBookId, seekBar.getProgress());
-//                    header.setText("Unpaused");
-                    header.setText(String.format("Now playing: %s", getBookById(currentBookId).title));
+                    header.setText(String.format("%s %s", nowPlayingText, getBookById(currentBookId).title));
                     pausedBookId = 0;
                 }
             }
@@ -302,7 +337,7 @@ public class MainActivity extends FragmentActivity implements BookListFragment.O
         if (connected) {
             stopService(serviceIntent);
             binder.stop();
-            header.setText("Stopped");
+            header.setText(stopText);
             currentBookId = -1;
         }
     }
@@ -343,6 +378,72 @@ public class MainActivity extends FragmentActivity implements BookListFragment.O
         }
 
         return filteredResults;
+    }
+
+    public void saveBookToStorage(Book book, String fileName) {
+        FileOutputStream fos = null;
+        ObjectOutputStream os = null;
+        try {
+            fos = getApplicationContext().openFileOutput(fileName, Context.MODE_PRIVATE);
+            os = new ObjectOutputStream(fos);
+            os.writeObject(this);
+            os.close();
+            fos.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public Book getBookFromStorage(String fileName) {
+        FileInputStream fis = null;
+        ObjectInputStream is = null;
+        Book book = null;
+        try {
+            fis = getApplicationContext().openFileInput(fileName);
+            is = new ObjectInputStream(fis);
+            book = (Book) is.readObject();
+            is.close();
+            fis.close();
+        } catch (ClassNotFoundException | IOException e) {
+            e.printStackTrace();
+        }
+
+        return book;
+    }
+
+    public void downloadBookData(final int bookId) {
+        Thread t = new Thread() {
+            @Override
+            public void run() {
+
+                final String downloadURL = "https://kamorris.com/lab/audlib/download.php?id=";
+                final String bookDownloadURLString = String.format("%s%s", downloadURL, bookId);
+
+                try {
+                    URL bookURL = new URL(bookDownloadURLString);
+                    File file = new File(getFilesDir(), String.format("%s.mp3", bookId));
+
+                    InputStream is = new BufferedInputStream(bookURL.openStream());
+                    file.createNewFile();
+                    OutputStream os = new FileOutputStream(file);
+
+                    byte[] buffer = new byte[1024];
+                    int len = 0;
+                    while ((len = is.read(buffer)) != -1) {
+                        os.write(buffer, 0, len);
+                    }
+
+                    is.close();
+                    os.flush();
+                    os.close();
+                    Log.d("DOWNLOAD", "Successfully downloaded data");
+
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        };
+        t.start();
     }
 
     public void getBookListData() {
@@ -447,5 +548,4 @@ public class MainActivity extends FragmentActivity implements BookListFragment.O
         }
 
     });
-
 }
