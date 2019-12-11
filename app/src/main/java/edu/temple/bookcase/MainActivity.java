@@ -40,6 +40,7 @@ public class MainActivity extends FragmentActivity implements BookListFragment.O
     boolean onePane;
     Fragment fragmentContainer1;
     Fragment fragmentContainer2;
+    Intent serviceIntent;
     AudiobookService.MediaControlBinder binder;
     AudiobookService.BookProgress bookProgress;
     boolean connected;
@@ -68,7 +69,8 @@ public class MainActivity extends FragmentActivity implements BookListFragment.O
     @Override
     public void onStart() {
         super.onStart();
-        bindService(new Intent(this, AudiobookService.class), myConnection, Context.BIND_AUTO_CREATE);
+        serviceIntent = new Intent(this, AudiobookService.class);
+        bindService(serviceIntent, myConnection, Context.BIND_AUTO_CREATE);
     }
 
     @Override
@@ -270,6 +272,7 @@ public class MainActivity extends FragmentActivity implements BookListFragment.O
 //                seekBar.setProgress(0);
 //            }
             Book book = getBookById(bookId);
+            startService(serviceIntent);
             binder.play(bookId);
             currentBookId = book.id;
             seekBar.setMax(book.duration);
@@ -287,7 +290,8 @@ public class MainActivity extends FragmentActivity implements BookListFragment.O
             } else {
                 if (pausedBookId > 0) {
                     binder.play(pausedBookId, seekBar.getProgress());
-                    header.setText("Unpaused");
+//                    header.setText("Unpaused");
+                    header.setText(String.format("Now playing: %s", getBookById(currentBookId).title));
                     pausedBookId = 0;
                 }
             }
@@ -296,6 +300,7 @@ public class MainActivity extends FragmentActivity implements BookListFragment.O
 
     public void stopBook() {
         if (connected) {
+            stopService(serviceIntent);
             binder.stop();
             header.setText("Stopped");
             currentBookId = -1;
@@ -319,6 +324,7 @@ public class MainActivity extends FragmentActivity implements BookListFragment.O
     }
 
     public void displayAudioButtons() {
+        seekBar.setMax(getBookById(currentBookId).duration);
         seekBar.setVisibility(View.VISIBLE);
         findViewById(R.id.pauseButton).setVisibility(View.VISIBLE);
         findViewById(R.id.stopButton).setVisibility(View.VISIBLE);
@@ -429,17 +435,13 @@ public class MainActivity extends FragmentActivity implements BookListFragment.O
             if (bookProgress != null) {
                 currentBookId = bookProgress.getBookId();
                 currentBookProgress = bookProgress.getProgress();
+                if (binder.isPlaying()) {
+                    header.setText(String.format("Now playing: %s", getBookById(currentBookId).title));
+                    displayAudioButtons();
+                }
                 seekBar.setProgress(currentBookProgress);
             }
             Log.d("handler", "book: " + currentBookId + " -- progress: " + currentBookProgress + ". ");
-//            if (binder != null) {
-//                if (!binder.isPlaying())
-//                    binder.play(id, progress);
-//                else{
-//                    seekBar.setProgress(progress);
-//                }
-//            }else
-//                System.out.println("hi");
 
             return false;
         }
