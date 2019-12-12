@@ -85,9 +85,9 @@ public class ViewPagerFragment extends Fragment implements BookDetailsFragment.D
                 }
             });
 
-            if (currentBookId > 0) {
-                mPager.setCurrentItem(currentBookId);
-            }
+//            if (currentBookId > 0) {
+//                mPager.setCurrentItem(currentBookId);
+//            }
         }
 
         return view;

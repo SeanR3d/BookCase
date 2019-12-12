@@ -92,4 +92,10 @@ public class FileIO {
             e.printStackTrace();
         }
     }
+
+    public void deleteBookFromStorage(String fileName) {
+        File file = new File(context.getFilesDir(), fileName);
+        if (file != null)
+            file.delete();
+    }
 }

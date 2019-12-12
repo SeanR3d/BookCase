@@ -127,6 +127,7 @@ public class MainActivity extends FragmentActivity implements BookListFragment.O
         bookArrayList = fileIO.readBookListFromStorage(completeBookListFileName);
         filterBookList = fileIO.readBookListFromStorage(filteredBookListFileName);
         currentBook = fileIO.readBookFromStorage(currentBookFileName);
+        currentPlayingBook = fileIO.readBookFromStorage(currentBookPlayingFileName);
 
         fm = getSupportFragmentManager();
         onePane = findViewById(R.id.viewPagerContainer) != null;
@@ -142,32 +143,44 @@ public class MainActivity extends FragmentActivity implements BookListFragment.O
 
         if (onePane) {
             if (currentBook != null) {
-                ViewPagerFragment viewPagerFragment = ViewPagerFragment.newInstance(filterBookList, bookArrayList, currentBook.id);
-                fm.beginTransaction()
-//                        .remove(fragmentContainer2)
-                        .add(R.id.viewPagerContainer, viewPagerFragment)
-                        .commit();
+                if (fragmentContainer2 != null) {
+                    ViewPagerFragment viewPagerFragment = ViewPagerFragment.newInstance(filterBookList, bookArrayList, currentBook.id);
+                    fm.beginTransaction()
+                            .remove(fragmentContainer2)
+                            .add(R.id.viewPagerContainer, viewPagerFragment)
+                            .commit();
+                } else {
+                    ViewPagerFragment viewPagerFragment = ViewPagerFragment.newInstance(filterBookList, bookArrayList, currentBook.id);
+                    fm.beginTransaction()
+                            .add(R.id.viewPagerContainer, viewPagerFragment)
+                            .commit();
+                }
             } else {
                 fm.beginTransaction()
                         .add(R.id.viewPagerContainer, new ViewPagerFragment())
                         .commit();
-                if (bookArrayList == null)
-                    getBookListData();
+                getBookListData();
             }
         } else {
             if (currentBook != null) {
-                BookListFragment bookListFragment = BookListFragment.newInstance(filterBookList, bookArrayList, currentBook.id);
-                fm.beginTransaction()
-//                        .remove(fragmentContainer1)
-                        .add(R.id.bookListContainer, bookListFragment)
-                        .commit();
+                if (fragmentContainer1 != null) {
+                    BookListFragment bookListFragment = BookListFragment.newInstance(filterBookList, bookArrayList, currentBook.id);
+                    fm.beginTransaction()
+                            .remove(fragmentContainer1)
+                            .add(R.id.bookListContainer, bookListFragment)
+                            .commit();
+                } else {
+                    BookListFragment bookListFragment = BookListFragment.newInstance(filterBookList, bookArrayList, currentBook.id);
+                    fm.beginTransaction()
+                            .add(R.id.bookListContainer, bookListFragment)
+                            .commit();
+                }
             } else {
                 fm.beginTransaction()
                         .add(R.id.bookListContainer, new BookListFragment())
                         .add(R.id.BookDetailsContainer, new BookDetailsFragment())
                         .commit();
-                if (bookArrayList == null)
-                    getBookListData();
+                getBookListData();
             }
         }
 
@@ -287,6 +300,11 @@ public class MainActivity extends FragmentActivity implements BookListFragment.O
             }
         });
 
+        if (currentPlayingBook != null) {
+            displayAudioButtons();
+            header.setText(pauseText);
+            pausedBookId = currentPlayingBook.id;
+        }
     }
 
     @Override
@@ -312,6 +330,7 @@ public class MainActivity extends FragmentActivity implements BookListFragment.O
         } else {
             downloadButton.setText(deleteText);
         }
+        downloadButton.setVisibility(View.VISIBLE);
     }
 
     @Override
@@ -336,6 +355,13 @@ public class MainActivity extends FragmentActivity implements BookListFragment.O
                     .add(R.id.BookDetailsContainer, newFragment)
                     .commit();
         }
+
+        if (fileIO.readAudioFromStorage(currentBook.id) == null) {
+            downloadButton.setText(downloadText);
+        } else {
+            downloadButton.setText(deleteText);
+        }
+        downloadButton.setVisibility(View.VISIBLE);
     }
 
     @Override
@@ -351,10 +377,16 @@ public class MainActivity extends FragmentActivity implements BookListFragment.O
     }
 
     public void playBook(int bookId) {
-        currentPlayingBook = getBookById(bookId);
+        if (currentPlayingBook != null) {
+            if (currentPlayingBook.id != bookId) {
+                currentPlayingBook = getBookById(bookId);
+            }
+        } else
+            currentPlayingBook = getBookById(bookId);
         File audioFile = fileIO.readAudioFromStorage(bookId);
         if (audioFile != null) { // Play audio from local storage
             binder.play(audioFile, currentPlayingBook.progress);
+            startService(serviceIntent);
         } else if (connected) { // Play audio from api
             startService(serviceIntent);
             binder.play(bookId);
@@ -392,6 +424,7 @@ public class MainActivity extends FragmentActivity implements BookListFragment.O
             binder.stop();
             header.setText(stopText);
             currentPlayingBook = null;
+            fileIO.deleteBookFromStorage(currentBookPlayingFileName);
 //            currentBookId = -1;
         }
     }
@@ -610,6 +643,9 @@ public class MainActivity extends FragmentActivity implements BookListFragment.O
             fragmentContainer1 = fm.findFragmentById(R.id.viewPagerContainer);
             fragmentContainer2 = fm.findFragmentById(R.id.bookListContainer);
 
+            if (currentBook == null)
+                currentBook = bookArrayList.get(0);
+
             if (fragmentContainer1 != null) {
                 ViewPagerFragment viewPagerFragment = ViewPagerFragment.newInstance(bookArrayList, bookArrayList, currentBook.id);
                 fm.beginTransaction()
@@ -633,6 +669,8 @@ public class MainActivity extends FragmentActivity implements BookListFragment.O
         public boolean handleMessage(@NonNull Message msg) {
             bookProgress = (BookProgress) msg.obj;
             if (bookProgress != null) {
+                if (bookProgress.getBookId() ==  -1)
+                    System.out.println("here");
 //                currentBookId = bookProgress.getBookId();
                 currentBookProgress = bookProgress.getProgress();
                 if (binder.isPlaying()) {
