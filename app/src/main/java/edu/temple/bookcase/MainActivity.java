@@ -5,7 +5,6 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
-import android.icu.util.Output;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -27,19 +26,12 @@ import org.json.JSONObject;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.net.URL;
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 
 import edu.temple.audiobookplayer.AudiobookService;
@@ -50,7 +42,7 @@ public class MainActivity extends FragmentActivity implements BookListFragment.O
 
     FragmentManager fm;
     ArrayList<Book> bookArrayList;
-    ArrayList<Book> prevFilterBookList;
+    ArrayList<Book> filterBookList;
     boolean onePane;
     Fragment fragmentContainer1;
     Fragment fragmentContainer2;
@@ -62,7 +54,7 @@ public class MainActivity extends FragmentActivity implements BookListFragment.O
     SeekBar seekBar;
     Button downloadButton;
     int currentBookProgress;
-    int currentBookId;
+    //    int currentBookId;
     int pausedBookId;
     final static String bookProgressKey = "bookProgressKey";
     final static String currentBookIdKey = "currentBookIdKey";
@@ -73,8 +65,11 @@ public class MainActivity extends FragmentActivity implements BookListFragment.O
     final static String downloadText = "Download";
     String currentBookFileName = "currentBook";
     String currentBookPlayingFileName = "currentBookPlaying";
+    String completeBookListFileName = "completeBookList";
+    String filteredBookListFileName = "filteredBookList";
     Book currentBook;
     Book currentPlayingBook;
+    FileIO fileIO;
 
     ServiceConnection myConnection = new ServiceConnection() {
         @Override
@@ -107,27 +102,31 @@ public class MainActivity extends FragmentActivity implements BookListFragment.O
         currentBook.setProgress(0);
     }
 
-    @Override
-    public void onSaveInstanceState(Bundle savedInstanceState) {
-        super.onSaveInstanceState(savedInstanceState);
-//        savedInstanceState.putInt(currentBookIdKey, currentBookId);
-//        savedInstanceState.putInt(bookProgressKey, currentBookProgress);
-    }
-
-    @Override
-    public void onRestoreInstanceState(Bundle savedInstanceState) {
-        super.onRestoreInstanceState(savedInstanceState);
-//        currentBookId = savedInstanceState.getInt(currentBookIdKey);
-//        currentBookProgress = savedInstanceState.getInt(bookProgressKey);
-//        Log.d("Restore", "Restored: " + currentBookId + " " + currentBookProgress + " ");
-    }
+//    @Override
+//    public void onSaveInstanceState(Bundle savedInstanceState) {
+//        super.onSaveInstanceState(savedInstanceState);
+////        savedInstanceState.putInt(currentBookIdKey, currentBookId);
+////        savedInstanceState.putInt(bookProgressKey, currentBookProgress);
+//    }
+//
+//    @Override
+//    public void onRestoreInstanceState(Bundle savedInstanceState) {
+//        super.onRestoreInstanceState(savedInstanceState);
+////        currentBookId = savedInstanceState.getInt(currentBookIdKey);
+////        currentBookProgress = savedInstanceState.getInt(bookProgressKey);
+////        Log.d("Restore", "Restored: " + currentBookId + " " + currentBookProgress + " ");
+//    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        currentBook = getBookFromStorage(currentBookFileName);
+        // Get local storage data
+        fileIO = new FileIO(this);
+        bookArrayList = fileIO.readBookListFromStorage(completeBookListFileName);
+        filterBookList = fileIO.readBookListFromStorage(filteredBookListFileName);
+        currentBook = fileIO.readBookFromStorage(currentBookFileName);
 
         fm = getSupportFragmentManager();
         onePane = findViewById(R.id.viewPagerContainer) != null;
@@ -142,66 +141,101 @@ public class MainActivity extends FragmentActivity implements BookListFragment.O
         }
 
         if (onePane) {
-            if (fragmentContainer1 == null) {
-                if (fragmentContainer2 != null) {
-                    bookArrayList = ((BookListFragment) fragmentContainer2).getCompleteBooks();
-                    prevFilterBookList = ((BookListFragment) fragmentContainer2).getBooks();
-                    currentBookId = ((BookListFragment) fragmentContainer2).getCurrentBookId();
-                    if (currentBook != null)
-                        currentBookId = currentBook.id;
-                    ViewPagerFragment viewPagerFragment = ViewPagerFragment.newInstance(prevFilterBookList, bookArrayList, currentBookId);
-                    fm.beginTransaction()
-                            .remove(fragmentContainer2)
-                            .add(R.id.viewPagerContainer, viewPagerFragment)
-                            .commit();
-                } else {
-                    fm.beginTransaction()
-                            .add(R.id.viewPagerContainer, new ViewPagerFragment())
-                            .commit();
+            if (currentBook != null) {
+                ViewPagerFragment viewPagerFragment = ViewPagerFragment.newInstance(filterBookList, bookArrayList, currentBook.id);
+                fm.beginTransaction()
+//                        .remove(fragmentContainer2)
+                        .add(R.id.viewPagerContainer, viewPagerFragment)
+                        .commit();
+            } else {
+                fm.beginTransaction()
+                        .add(R.id.viewPagerContainer, new ViewPagerFragment())
+                        .commit();
+                if (bookArrayList == null)
                     getBookListData();
-                }
             }
         } else {
-            if (fragmentContainer2 == null) {
-                if (fragmentContainer1 != null) {
-                    bookArrayList = ((ViewPagerFragment) fragmentContainer1).getCompleteBooks();
-                    prevFilterBookList = ((ViewPagerFragment) fragmentContainer1).getBooks();
-                    currentBookId = ((ViewPagerFragment) fragmentContainer1).getCurrentBookId();
-                    BookListFragment bookListFragment = BookListFragment.newInstance(prevFilterBookList, bookArrayList, currentBookId);
-                    fm.beginTransaction()
-                            .remove(fragmentContainer1)
-                            .add(R.id.bookListContainer, bookListFragment)
-                            .commit();
-                } else {
-                    fm.beginTransaction()
-                            .add(R.id.bookListContainer, new BookListFragment())
-                            .add(R.id.BookDetailsContainer, new BookDetailsFragment())
-                            .commit();
-                    getBookListData();
-                }
-            } else {
-                bookArrayList = ((BookListFragment) fragmentContainer2).getBooks();
-                currentBookId = ((BookListFragment) fragmentContainer2).getCurrentBookId();
+            if (currentBook != null) {
+                BookListFragment bookListFragment = BookListFragment.newInstance(filterBookList, bookArrayList, currentBook.id);
                 fm.beginTransaction()
-                        .replace(R.id.bookListContainer, BookListFragment.newInstance(bookArrayList, bookArrayList, currentBookId))
+//                        .remove(fragmentContainer1)
+                        .add(R.id.bookListContainer, bookListFragment)
                         .commit();
+            } else {
+                fm.beginTransaction()
+                        .add(R.id.bookListContainer, new BookListFragment())
+                        .add(R.id.BookDetailsContainer, new BookDetailsFragment())
+                        .commit();
+                if (bookArrayList == null)
+                    getBookListData();
             }
         }
+
+
+//        if (onePane) {
+//            if (fragmentContainer1 == null) {
+//                if (fragmentContainer2 != null) {
+////                    bookArrayList = ((BookListFragment) fragmentContainer2).getCompleteBooks();
+////                    filterBookList = ((BookListFragment) fragmentContainer2).getBooks();
+////                    currentBookId = ((BookListFragment) fragmentContainer2).getCurrentBookId();
+////                    if (currentBook != null)
+////                        currentBookId = currentBook.id;
+//                    ViewPagerFragment viewPagerFragment = ViewPagerFragment.newInstance(filterBookList, bookArrayList, currentBook.id);
+//                    fm.beginTransaction()
+//                            .remove(fragmentContainer2)
+//                            .add(R.id.viewPagerContainer, viewPagerFragment)
+//                            .commit();
+//                } else {
+//                    fm.beginTransaction()
+//                            .add(R.id.viewPagerContainer, new ViewPagerFragment())
+//                            .commit();
+//                    if (bookArrayList == null)
+//                        getBookListData();
+//                }
+//            }
+//        } else {
+//            if (fragmentContainer2 == null) {
+//                if (fragmentContainer1 != null) {
+////                    bookArrayList = ((ViewPagerFragment) fragmentContainer1).getCompleteBooks();
+////                    filterBookList = ((ViewPagerFragment) fragmentContainer1).getBooks();
+////                    currentBookId = ((ViewPagerFragment) fragmentContainer1).getCurrentBookId();
+//                    BookListFragment bookListFragment = BookListFragment.newInstance(filterBookList, bookArrayList, currentBook.id);
+//                    fm.beginTransaction()
+//                            .remove(fragmentContainer1)
+//                            .add(R.id.bookListContainer, bookListFragment)
+//                            .commit();
+//                } else {
+//                    fm.beginTransaction()
+//                            .add(R.id.bookListContainer, new BookListFragment())
+//                            .add(R.id.BookDetailsContainer, new BookDetailsFragment())
+//                            .commit();
+//                    if (bookArrayList == null)
+//                        getBookListData();
+//                }
+//            } else {
+////                bookArrayList = ((BookListFragment) fragmentContainer2).getBooks();
+////                currentBookId = ((BookListFragment) fragmentContainer2).getCurrentBookId();
+//                fm.beginTransaction()
+//                        .replace(R.id.bookListContainer, BookListFragment.newInstance(bookArrayList, bookArrayList, currentBook.id))
+//                        .commit();
+//            }
+//        }
 
         findViewById(R.id.searchButton).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 EditText editText = findViewById(R.id.searchEditText);
-                ArrayList<Book> filterBooksArrayList = filterBooks(editText.getText().toString());
+                filterBookList = filterBooks(editText.getText().toString());
+                fileIO.writeBookListToStorage(filterBookList, filteredBookListFileName);
                 if (onePane) {
                     ViewPagerFragment viewPagerFragment = (ViewPagerFragment) fm.findFragmentById(R.id.viewPagerContainer);
                     if (viewPagerFragment != null) {
-                        viewPagerFragment.filterViewPager(filterBooksArrayList);
+                        viewPagerFragment.filterViewPager(filterBookList);
                     }
                 } else {
                     BookListFragment bookListFragment = (BookListFragment) fm.findFragmentById(R.id.bookListContainer);
                     if (bookListFragment != null) {
-                        bookListFragment.filterArrayAdapter(filterBooksArrayList);
+                        bookListFragment.filterArrayAdapter(filterBookList);
                     }
                 }
 
@@ -225,7 +259,6 @@ public class MainActivity extends FragmentActivity implements BookListFragment.O
                 binder.seekTo(progress);
             }
         });
-
         findViewById(R.id.pauseButton).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -245,11 +278,10 @@ public class MainActivity extends FragmentActivity implements BookListFragment.O
             @Override
             public void onClick(View v) {
                 if (downloadButton.getText() == downloadText) {
-                    downloadBookData(currentBook.id);
+                    downloadBookAudio(currentBook.id);
                     downloadButton.setText(deleteText);
-                }
-                else if (downloadButton.getText() == deleteText) {
-                    deleteAudioFromStorage(currentBook.id);
+                } else if (downloadButton.getText() == deleteText) {
+                    fileIO.deleteAudioFromStorage(currentBook.id);
                     downloadButton.setText(downloadText);
                 }
             }
@@ -273,8 +305,9 @@ public class MainActivity extends FragmentActivity implements BookListFragment.O
     @Override
     public void onBookSelectedPager(int bookId) {
         currentBook = getBookById(bookId);
-        currentBook.saveBookToStorage(this, currentBookFileName);
-        if (getAudioFromStorage(currentBook.id) == null) {
+//        currentBook.writeBookToStorage(this, currentBookFileName);
+        fileIO.writeBookToStorage(currentBook, currentBookFileName);
+        if (fileIO.readAudioFromStorage(currentBook.id) == null) {
             downloadButton.setText(downloadText);
         } else {
             downloadButton.setText(deleteText);
@@ -319,19 +352,18 @@ public class MainActivity extends FragmentActivity implements BookListFragment.O
 
     public void playBook(int bookId) {
         currentPlayingBook = getBookById(bookId);
-        File audioFile = getAudioFromStorage(bookId);
+        File audioFile = fileIO.readAudioFromStorage(bookId);
         if (audioFile != null) { // Play audio from local storage
             binder.play(audioFile, currentPlayingBook.progress);
-        }
-        else if (connected) { // Play audio from api
+        } else if (connected) { // Play audio from api
             startService(serviceIntent);
             binder.play(bookId);
         }
         seekBar.setMax(currentPlayingBook.duration);
         seekBar.setProgress(0);
         header.setText(String.format("%s %s", nowPlayingText, currentPlayingBook.title));
-        currentPlayingBook.saveBookToStorage(this, currentBookPlayingFileName);
-
+//        currentPlayingBook.writeBookToStorage(this, currentBookPlayingFileName);
+        fileIO.writeBookToStorage(currentPlayingBook, currentBookPlayingFileName);
     }
 
     public void pauseBook() {
@@ -341,11 +373,13 @@ public class MainActivity extends FragmentActivity implements BookListFragment.O
                 binder.pause();
                 header.setText(pauseText);
                 currentPlayingBook.setProgress(bookProgress.getProgress());
-                currentPlayingBook.saveBookToStorage(this, currentBookPlayingFileName);
+//                currentPlayingBook.writeBookToStorage(this, currentBookPlayingFileName);
+                fileIO.writeBookToStorage(currentPlayingBook, currentBookPlayingFileName);
             } else {
                 if (pausedBookId > 0) {
-                    binder.play(pausedBookId, seekBar.getProgress());
-                    header.setText(String.format("%s %s", nowPlayingText, currentPlayingBook.title));
+//                    binder.play(pausedBookId, seekBar.getProgress());
+//                    header.setText(String.format("%s %s", nowPlayingText, currentPlayingBook.title));
+                    playBook(pausedBookId);
                     pausedBookId = 0;
                 }
             }
@@ -400,37 +434,82 @@ public class MainActivity extends FragmentActivity implements BookListFragment.O
         return filteredResults;
     }
 
-    public Book getBookFromStorage(String fileName) {
-        FileInputStream fis = null;
-        ObjectInputStream is = null;
-        Book book = null;
-        try {
-            fis = getApplicationContext().openFileInput(fileName);
-            is = new ObjectInputStream(fis);
-            book = (Book) is.readObject();
-            is.close();
-            fis.close();
-        } catch (ClassNotFoundException | IOException e) {
-            e.printStackTrace();
-        }
+//    public Book readBookFromStorage(String fileName) {
+//        FileInputStream fis = null;
+//        ObjectInputStream is = null;
+//        Book book = null;
+//        try {
+//            fis = getApplicationContext().openFileInput(fileName);
+//            is = new ObjectInputStream(fis);
+//            book = (Book) is.readObject();
+//            is.close();
+//            fis.close();
+//        } catch (ClassNotFoundException | IOException e) {
+//            e.printStackTrace();
+//        }
+//
+//        return book;
+//    }
+//
+//    public void writeBookToStorage(Book book, String fileName) {
+//        FileOutputStream fos = null;
+//        ObjectOutputStream os = null;
+//        try {
+//            fos = this.openFileOutput(fileName, Context.MODE_PRIVATE);
+//            os = new ObjectOutputStream(fos);
+//            os.writeObject(book);
+//            os.close();
+//            fos.close();
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+//    }
+//
+//    public File readAudioFromStorage(int bookId) {
+//            String fileName = String.format("%s.mp3", bookId);
+//            File file = new File(getFilesDir(), fileName);
+//        return file.exists() ? file : null;
+//
+//    }
+//
+//    public void deleteAudioFromStorage(int bookId) {
+//        File file = readAudioFromStorage(bookId);
+//        if (file != null)
+//            file.delete();
+//    }
+//
+//
+//    public ArrayList<Book> readBookListFromStorage(String fileName) {
+//        ArrayList<Book> bookArrayList = null;
+//        FileInputStream fis = null;
+//        ObjectInputStream is = null;
+//        try {
+//            fis = getApplicationContext().openFileInput(fileName);
+//            is = new ObjectInputStream(fis);
+//            bookArrayList = (ArrayList<Book>) is.readObject();
+//            is.close();
+//            fis.close();
+//        } catch (ClassNotFoundException | IOException e) {
+//            e.printStackTrace();
+//        }
+//        return bookArrayList;
+//    }
+//
+//    public void writeBookListToStorage(ArrayList<Book> bookArrayList, String fileName) {
+//        FileOutputStream fos = null;
+//        ObjectOutputStream os = null;
+//        try {
+//            fos = this.openFileOutput(fileName, Context.MODE_PRIVATE);
+//            os = new ObjectOutputStream(fos);
+//            os.writeObject(this);
+//            os.close();
+//            fos.close();
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+//    }
 
-        return book;
-    }
-
-    public File getAudioFromStorage(int bookId) {
-            String fileName = String.format("%s.mp3", bookId);
-            File file = new File(getFilesDir(), fileName);
-        return file.exists() ? file : null;
-
-    }
-
-    public void deleteAudioFromStorage(int bookId) {
-        File file = getAudioFromStorage(bookId);
-        if (file != null)
-            file.delete();
-    }
-
-    public void downloadBookData(final int bookId) {
+    public void downloadBookAudio(final int bookId) {
         Thread t = new Thread() {
             @Override
             public void run() {
@@ -521,6 +600,7 @@ public class MainActivity extends FragmentActivity implements BookListFragment.O
                     );
                     bookArrayList.add(book);
                 }
+                fileIO.writeBookListToStorage(bookArrayList, completeBookListFileName);
                 Log.d("Handler", "Created bookArrayList of size:" + bookArrayList.size() + ".");
 
             } catch (Exception e) {
@@ -531,13 +611,13 @@ public class MainActivity extends FragmentActivity implements BookListFragment.O
             fragmentContainer2 = fm.findFragmentById(R.id.bookListContainer);
 
             if (fragmentContainer1 != null) {
-                ViewPagerFragment viewPagerFragment = ViewPagerFragment.newInstance(bookArrayList, bookArrayList, currentBookId);
+                ViewPagerFragment viewPagerFragment = ViewPagerFragment.newInstance(bookArrayList, bookArrayList, currentBook.id);
                 fm.beginTransaction()
                         .remove(fragmentContainer1)
                         .add(R.id.viewPagerContainer, viewPagerFragment)
                         .commit();
             } else if (fragmentContainer2 != null) {
-                BookListFragment bookListFragment = BookListFragment.newInstance(bookArrayList, bookArrayList, currentBookId);
+                BookListFragment bookListFragment = BookListFragment.newInstance(bookArrayList, bookArrayList, currentBook.id);
                 fm.beginTransaction()
                         .remove(fragmentContainer2)
                         .add(R.id.bookListContainer, bookListFragment)
@@ -553,15 +633,15 @@ public class MainActivity extends FragmentActivity implements BookListFragment.O
         public boolean handleMessage(@NonNull Message msg) {
             bookProgress = (BookProgress) msg.obj;
             if (bookProgress != null) {
-                currentBookId = bookProgress.getBookId();
+//                currentBookId = bookProgress.getBookId();
                 currentBookProgress = bookProgress.getProgress();
                 if (binder.isPlaying()) {
                     header.setText(String.format("%s %s", nowPlayingText, currentPlayingBook.title));
                     displayAudioButtons();
                 }
                 seekBar.setProgress(currentBookProgress);
+                Log.d("handler", "book: " + bookProgress.getBookId() + " -- progress: " + currentBookProgress + ". ");
             }
-            Log.d("handler", "book: " + currentBookId + " -- progress: " + currentBookProgress + ". ");
 
             return false;
         }

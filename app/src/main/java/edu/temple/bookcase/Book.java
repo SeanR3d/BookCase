@@ -33,18 +33,18 @@ public class Book implements Serializable {
         }
     }
 
-    public void saveBookToStorage(Context context, String fileName) {
-        FileOutputStream fos = null;
-        ObjectOutputStream os = null;
-        try {
-            fos = context.openFileOutput(fileName, Context.MODE_PRIVATE);
-            os = new ObjectOutputStream(fos);
-            os.writeObject(this);
-            os.close();
-            fos.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
+//    public void writeBookToStorage(Context context, String fileName) {
+//        FileOutputStream fos = null;
+//        ObjectOutputStream os = null;
+//        try {
+//            fos = context.openFileOutput(fileName, Context.MODE_PRIVATE);
+//            os = new ObjectOutputStream(fos);
+//            os.writeObject(this);
+//            os.close();
+//            fos.close();
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+//    }
 
 }

@@ -75,7 +75,7 @@ public class ViewPagerFragment extends Fragment implements BookDetailsFragment.D
 
                 @Override
                 public void onPageSelected(int position) {
-                    currentBookId = books.get(position).id;
+                    currentBookId = completeBooks.get(position).id;
                     selectedCallback.onBookSelectedPager(currentBookId);
                 }
 
