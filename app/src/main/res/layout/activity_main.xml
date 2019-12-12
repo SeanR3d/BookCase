@@ -6,11 +6,4 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
-    <fragment
-        android:id="@+id/view_pager_fragment"
-        android:name="edu.temple.bookcase.ViewPagerFragment"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent" />
-
-
 </FrameLayout>
