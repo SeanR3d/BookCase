@@ -75,7 +75,6 @@ public class MainActivity extends FragmentActivity implements BookListFragment.O
     String currentBookPlayingFileName = "currentBookPlaying";
     Book currentBook;
     Book currentPlayingBook;
-    File currentBookAudio;
 
     ServiceConnection myConnection = new ServiceConnection() {
         @Override
@@ -129,9 +128,6 @@ public class MainActivity extends FragmentActivity implements BookListFragment.O
         setContentView(R.layout.activity_main);
 
         currentBook = getBookFromStorage(currentBookFileName);
-        if (currentBook != null) {
-            currentBookAudio = getAudioFromStorage(currentBook.id);
-        }
 
         fm = getSupportFragmentManager();
         onePane = findViewById(R.id.viewPagerContainer) != null;
@@ -322,15 +318,20 @@ public class MainActivity extends FragmentActivity implements BookListFragment.O
     }
 
     public void playBook(int bookId) {
-        if (connected) {
-            currentPlayingBook = getBookById(bookId);
+        currentPlayingBook = getBookById(bookId);
+        File audioFile = getAudioFromStorage(bookId);
+        if (audioFile != null) { // Play audio from local storage
+            binder.play(audioFile, currentPlayingBook.progress);
+        }
+        else if (connected) { // Play audio from api
             startService(serviceIntent);
             binder.play(bookId);
-            seekBar.setMax(currentPlayingBook.duration);
-            seekBar.setProgress(0);
-            header.setText(String.format("%s %s", nowPlayingText, currentPlayingBook.title));
-            currentPlayingBook.saveBookToStorage(this, currentBookPlayingFileName);
         }
+        seekBar.setMax(currentPlayingBook.duration);
+        seekBar.setProgress(0);
+        header.setText(String.format("%s %s", nowPlayingText, currentPlayingBook.title));
+        currentPlayingBook.saveBookToStorage(this, currentBookPlayingFileName);
+
     }
 
     public void pauseBook() {
@@ -386,11 +387,11 @@ public class MainActivity extends FragmentActivity implements BookListFragment.O
 
     public ArrayList<Book> filterBooks(String search) {
         ArrayList<Book> filteredResults = new ArrayList<>();
-
+        search = search.toLowerCase();
         for (Book book : bookArrayList) {
-            if (book.title.contains(search))
+            if (book.title.toLowerCase().contains(search))
                 filteredResults.add(book);
-            else if (book.author.contains(search))
+            else if (book.author.toLowerCase().contains(search))
                 filteredResults.add(book);
             else if (String.valueOf(book.published).contains(search))
                 filteredResults.add(book);
@@ -555,7 +556,7 @@ public class MainActivity extends FragmentActivity implements BookListFragment.O
                 currentBookId = bookProgress.getBookId();
                 currentBookProgress = bookProgress.getProgress();
                 if (binder.isPlaying()) {
-                    header.setText(String.format("Now playing: %s", getBookById(currentBookId).title));
+                    header.setText(String.format("%s %s", nowPlayingText, currentPlayingBook.title));
                     displayAudioButtons();
                 }
                 seekBar.setProgress(currentBookProgress);
