@@ -24,6 +24,7 @@ public class ViewPagerFragment extends Fragment implements BookDetailsFragment.D
     private final static String bookArrayListKey = "bookArrayListKey";
     private final static String currentBookIdKey = "currentBookIdKey";
     private OnPlaySelectedListener listenerCallback;
+    private OnBookSelectedListener selectedCallback;
 
     public ViewPagerFragment() {
         // Required empty public constructor
@@ -61,14 +62,21 @@ public class ViewPagerFragment extends Fragment implements BookDetailsFragment.D
             mAdapter = new MyFragmentStatePagerAdapter(getChildFragmentManager(), books, this);
             mPager.setAdapter(mAdapter);
             mPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
+
+                boolean first = true;
+
                 @Override
                 public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
-
+                    if (first && positionOffset == 0 && positionOffsetPixels == 0){
+                        onPageSelected(0);
+                        first = false;
+                    }
                 }
 
                 @Override
                 public void onPageSelected(int position) {
-                    currentBookId = position;
+                    currentBookId = books.get(position).id;
+                    selectedCallback.onBookSelectedPager(currentBookId);
                 }
 
                 @Override
@@ -107,6 +115,14 @@ public class ViewPagerFragment extends Fragment implements BookDetailsFragment.D
 
     public int getCurrentBookId() {
         return this.currentBookId;
+    }
+
+    public void setOnBookSelectedListener(OnBookSelectedListener callback) {
+        this.selectedCallback = callback;
+    }
+
+    public interface OnBookSelectedListener {
+        void onBookSelectedPager(int bookId);
     }
 
     public void setOnPlaySelectedListener(OnPlaySelectedListener callback) {

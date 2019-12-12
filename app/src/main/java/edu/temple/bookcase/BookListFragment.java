@@ -77,7 +77,7 @@ public class BookListFragment extends Fragment {
     }
 
     public interface OnBookSelectedListener {
-        void onBookSelected(String bookTitle);
+        void onBookSelectedList(String bookTitle);
     }
 
     @Override
@@ -98,7 +98,7 @@ public class BookListFragment extends Fragment {
                 @Override
                 public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                     String bookTitle = adapter.getItem(position);
-                    selectedCallback.onBookSelected(bookTitle);
+                    selectedCallback.onBookSelectedList(bookTitle);
                     currentBookId = position;
                 }
             });
